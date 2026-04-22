@@ -8,20 +8,40 @@ type Tab = "rates" | "dayTypes" | "bectu";
 
 export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
   const [tab, setTab] = useState<Tab>("rates");
-  const set = <K extends keyof RateConfig>(k: K, v: RateConfig[K]) => onChange({ ...rates, [k]: v });
+
+  const set = <K extends keyof RateConfig>(k: K, v: RateConfig[K]) => {
+    // Basic clamping and sanitization
+    let val = v;
+    if (typeof val === "number") {
+      val = Math.max(0, val) as RateConfig[K];
+    }
+    onChange({ ...rates, [k]: val });
+  };
+
+  const handleTimeChange = (k: "nightStart" | "nightEnd", v: string) => {
+    // Basic format filter and correction
+    let cleaned = v.replace(/[^\d:]/g, "").slice(0, 5);
+    // Correct "2000" to "20:00"
+    if (cleaned.length === 4 && !cleaned.includes(":")) {
+      const hh = cleaned.slice(0, 2);
+      const mm = cleaned.slice(2, 4);
+      if (Number(hh) < 24 && Number(mm) < 60) {
+        cleaned = `${hh}:${mm}`;
+      }
+    }
+    set(k, cleaned);
+  };
+
   const setDayTypeRate = (t: DayType, v: number) =>
-    onChange({ ...rates, dayTypeRates: { ...rates.dayTypeRates, [t]: v } });
+    onChange({ ...rates, dayTypeRates: { ...rates.dayTypeRates, [t]: Math.min(5, Math.max(0, v)) } });
 
   return (
     <div className="bg-carbon border border-border rounded-2xl p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Project & Rates</h3>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Production Title</label>
+      <div className="space-y-3">
+        <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Production Title</label>
         <input value={project} onChange={(e) => onProject(e.target.value.slice(0, 80))}
-          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60" />
+          placeholder="Enter production title..."
+          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors" />
       </div>
 
       <div className="flex gap-1 bg-obsidian border border-border rounded-lg p-1">
@@ -33,13 +53,25 @@ export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
       {tab === "rates" && (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <NumField label="Day rate £" value={rates.dayRate} onChange={(v) => set("dayRate", v)} step={5} />
+            <NumField label="Day rate £" value={rates.dayRate} onChange={(v) => {
+              const cleaned = Math.max(0, v);
+              const h = rates.basicHours > 0 ? cleaned / rates.basicHours : rates.hourlyRate;
+              onChange({ ...rates, dayRate: cleaned, hourlyRate: Number(h.toFixed(2)) });
+            }} step={5} />
             <NumField label="Hourly £" value={rates.hourlyRate} onChange={(v) => set("hourlyRate", v)} step={0.5} />
-            <NumField label="Basic hrs/day" value={rates.basicHours} onChange={(v) => set("basicHours", v)} />
+            <div className="space-y-1">
+              <NumField label="Basic hrs/day" value={rates.basicHours} onChange={(v) => {
+                const basic = Math.max(1, v); // Cannot have 0 or less basic hours
+                const h = rates.dayRate / basic;
+                onChange({ ...rates, basicHours: basic, hourlyRate: rates.dayRate > 0 ? Number(h.toFixed(2)) : rates.hourlyRate });
+              }} />
+              {rates.basicHours === 10 && <p className="text-[9px] uppercase text-primary font-mono px-1">Enables 10h Running Lunch</p>}
+              {rates.basicHours === 11 && <p className="text-[9px] uppercase text-muted-foreground font-mono px-1">Standard 11+1 Day</p>}
+            </div>
             <NumField label="Pre-call ×" value={rates.preCallRate} onChange={(v) => set("preCallRate", v)} step={0.1} />
             <NumField label="Night premium £" value={rates.nightPremium} onChange={(v) => set("nightPremium", v)} />
             <NumField label="Per diem £" value={rates.perDiem} onChange={(v) => set("perDiem", v)} step={1} />
-            <NumField label="VAT rate" value={rates.vatRate} onChange={(v) => set("vatRate", v)} step={0.01} />
+            <NumField label="VAT rate" value={rates.vatRate} onChange={(v) => set("vatRate", Math.min(1, v))} step={0.01} />
             <NumField label="Kit £/day" value={rates.kitRentalPerDay || 0} onChange={(v) => set("kitRentalPerDay", v)} />
           </div>
           <p className="text-[10px] text-muted-foreground font-mono leading-relaxed">
@@ -82,12 +114,12 @@ export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Night window start</label>
-              <input value={rates.nightStart} onChange={(e) => set("nightStart", e.target.value)} placeholder="20:00"
+              <input value={rates.nightStart} onChange={(e) => handleTimeChange("nightStart", e.target.value)} placeholder="20:00"
                 className="w-full bg-obsidian border border-border rounded-lg px-3 py-2 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Night window end</label>
-              <input value={rates.nightEnd} onChange={(e) => set("nightEnd", e.target.value)} placeholder="07:00"
+              <input value={rates.nightEnd} onChange={(e) => handleTimeChange("nightEnd", e.target.value)} placeholder="07:00"
                 className="w-full bg-obsidian border border-border rounded-lg px-3 py-2 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
             </div>
           </div>
@@ -110,10 +142,10 @@ const TabButton = ({ active, onClick, children }: { active: boolean; onClick: ()
 );
 
 const NumField = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (v: number) => void; step?: number }) => (
-  <div className="space-y-1.5">
-    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{label}</label>
+  <div className="space-y-2">
+    <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">{label}</label>
     <input type="number" min={0} step={step} value={value}
       onChange={(e) => onChange(Number(e.target.value) || 0)}
-      className="w-full bg-obsidian border border-border rounded-lg px-3 py-2 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
+      className="w-full bg-obsidian border border-border rounded-lg px-4 py-2.5 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors" />
   </div>
 );

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayEntry, RateConfig } from "@/lib/calc";
-import { DAY_TYPE_LABELS, breakdown, fmtGBP, fmtHours } from "@/lib/calc";
+import { DAY_TYPE_LABELS, breakdown, fmtGBP, fmtHours, getConsecutiveDay, fmtDate } from "@/lib/calc";
 
 type Props = {
   entries: DayEntry[];
@@ -116,12 +116,23 @@ export const MonthCalendar = ({ entries, rates, onSelectDay }: Props) => {
 
       <div className="grid grid-cols-7 gap-1">
         {cells.map((d) => {
-          const key = fmtKey(d);
+          const key = fmtDate(d);
           const inMonth = d.getMonth() === anchor.getMonth();
           const list = byDate.get(key) || [];
           const isToday = key === todayKey;
           const dayTotal = list.reduce((s, e) => s + breakdown(e, rates).total, 0);
           const dayHours = list.reduce((s, e) => s + breakdown(e, rates).worked, 0);
+
+          const dayIndex = getConsecutiveDay(key);
+          const hasWorked = list.some(e => e.dayType !== 'rest');
+          
+          let outlineClass = inMonth ? "border-border hover:border-primary/30" : "border-border/30 opacity-50 bg-obsidian/40";
+          if (isToday) outlineClass = "border-primary/60";
+          else if (hasWorked) {
+            if (dayIndex === 6) outlineClass = "border-amber shadow-[inset_0_0_8px_rgba(245,158,11,0.1)]";
+            else if (dayIndex === 7) outlineClass = "border-ruby shadow-[inset_0_0_8px_rgba(239,68,68,0.1)]";
+            else outlineClass = "border-primary/40 shadow-[inset_0_0_8px_rgba(var(--primary),0.05)]";
+          }
 
           return (
             <button
@@ -129,10 +140,8 @@ export const MonthCalendar = ({ entries, rates, onSelectDay }: Props) => {
               type="button"
               onClick={() => onSelectDay?.(key)}
               className={`relative min-h-[5.5rem] text-left p-2 rounded-lg border transition-colors ${
-                inMonth ? "bg-carbon/50" : "bg-obsidian/40 opacity-50"
-              } ${
-                isToday ? "border-primary/60" : "border-border hover:border-primary/30"
-              }`}
+                inMonth ? "bg-carbon/50" : "bg-obsidian/40"
+              } ${outlineClass}`}
             >
               <div className="flex items-center justify-between">
                 <span className={`text-xs font-mono tabular-nums ${isToday ? "text-primary" : "text-foreground"}`}>

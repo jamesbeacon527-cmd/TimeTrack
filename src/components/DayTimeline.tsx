@@ -51,7 +51,7 @@ function buildSegments(entry: DayEntry, rates: RateConfig): { segments: Segment[
   const workedBuckets = [
     { name: "Basic", remaining: basicMin, className: "bg-primary/80", swatch: "bg-primary" },
     { name: "Shooting OT 2×", remaining: ot2Min, className: "bg-ruby/80", swatch: "bg-ruby" },
-    { name: "OT 1.5×", remaining: ot15Min, className: "bg-accent/80", swatch: "bg-accent" },
+    { name: "OT 1.5×", remaining: ot15Min, className: "bg-amber/80", swatch: "bg-amber" },
   ];
 
   const segments: Segment[] = [];
@@ -179,10 +179,10 @@ export const DayTimeline = ({ entry, rates }: Props) => {
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono pt-2">
         {b.preCall > 0 && <Legend swatch="bg-accent/50" label={`Pre-call ${fmtHours(b.preCall)}h`} />}
         <Legend swatch="bg-primary" label={`Basic ${fmtHours(b.basic)}h`} />
-        {b.ot2 > 0 && <Legend swatch="bg-ruby" label={`Shooting OT 2× ${fmtHours(b.ot2)}h`} />}
-        {b.ot15 > 0 && <Legend swatch="bg-accent" label={`OT 1.5× ${fmtHours(b.ot15)}h`} />}
+        {b.ot15 > 0 && <Legend swatch="bg-amber" label={`OT 1.5× ${fmtHours(b.ot15)}h`} />}
+        {b.ot2 > 0 && <Legend swatch="bg-ruby" label={`OT 2× ${fmtHours(b.ot2)}h`} />}
         {entry.mealMinutes > 0 && <Legend swatch="bg-muted" label={`Meal ${entry.mealMinutes}m`} />}
-        {entry.isNight && <Legend swatch="bg-accent/40" label="Night premium" />}
+        {entry.isNight && <Legend swatch="bg-accent" label="Night premium" />}
       </div>
     </div>
   );

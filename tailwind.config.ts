@@ -50,10 +50,16 @@ export default {
         },
         obsidian: "hsl(var(--obsidian))",
         carbon: "hsl(var(--carbon))",
+        volt: "hsl(var(--primary))",
+        cyan: "hsl(var(--accent))",
         "slate-glass": "hsl(var(--slate-glass))",
         ruby: {
           DEFAULT: "hsl(var(--ruby))",
           foreground: "hsl(var(--ruby-foreground))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--amber))",
+          foreground: "hsl(var(--amber-foreground))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

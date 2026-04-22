@@ -87,12 +87,12 @@ export function useProjects() {
 
   const setActive = (id: string) => setState((s) => ({ ...s, activeId: id }));
 
-  const createProject = (name: string) => {
+  const createProject = (name: string, initialRates?: RateConfig) => {
     const p: Project = {
       id: crypto.randomUUID(),
       name: name.trim() || "New Production",
       createdAt: new Date().toISOString(),
-      rates: DEFAULT_RATES,
+      rates: initialRates || DEFAULT_RATES,
       entries: [],
     };
     setState((s) => ({ projects: [...s.projects, p], activeId: p.id }));

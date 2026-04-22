@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 import type { DayEntry, DayType } from "@/lib/calc";
 import { DAY_TYPES, DAY_TYPE_LABELS } from "@/lib/calc";
 
@@ -7,6 +8,8 @@ type Props = {
   entry: DayEntry;
   onSave: (patch: Partial<DayEntry>) => void;
   onCancel: () => void;
+  allEntries?: DayEntry[];
+  recentLocations?: string[];
   basicHours?: number;
 };
 
@@ -20,7 +23,20 @@ const addHoursToTime = (hhmm: string, hours: number): string => {
   return `${hh}:${mm}`;
 };
 
-export const EntryEditor = ({ entry, onSave, onCancel, basicHours = 10 }: Props) => {
+/** Corrects "2000" to "20:00" and ensures valid format during typing */
+const formatTimeInput = (val: string): string => {
+  const cleaned = val.replace(/[^\d]/g, "");
+  if (cleaned.length === 4) {
+    const hh = cleaned.slice(0, 2);
+    const mm = cleaned.slice(2, 4);
+    if (Number(hh) < 24 && Number(mm) < 60) {
+      return `${hh}:${mm}`;
+    }
+  }
+  return val;
+};
+
+export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLocations = [], basicHours = 10 }: Props) => {
   const [date, setDate] = useState(entry.date);
   const [dayType, setDayType] = useState<DayType>(entry.dayType ?? "shoot");
   const [location, setLocation] = useState(entry.location ?? "");
@@ -56,10 +72,61 @@ export const EntryEditor = ({ entry, onSave, onCancel, basicHours = 10 }: Props)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\d{2}:\d{2}$/.test(call) || !/^\d{2}:\d{2}$/.test(wrap)) return;
-    if (actualStart && !/^\d{2}:\d{2}$/.test(actualStart)) return;
-    if (actualWrap && !/^\d{2}:\d{2}$/.test(actualWrap)) return;
-    onSave({ date, dayType, location: location.trim(), call, actualStart: actualStart || undefined, wrap, actualWrap: actualWrap || undefined, mealMinutes, travelMinutes, isNight, perDiem, shootingOT, shootingOTMinutes: shootingOT ? shootingOTMinutes : undefined, consecutiveDay });
+    
+    // Check for date conflicts with other entries
+    if (allEntries.some(ent => ent.date === date && ent.id !== entry.id)) {
+      toast({ title: "Duplicate Date", description: `Another entry for ${date} already exists.`, variant: "destructive" });
+      return;
+    }
+
+    // Validate Required Fields
+    if (!location.trim()) {
+      toast({ title: "Missing Information", description: "Please provide a unit location.", variant: "destructive" });
+      return;
+    }
+
+    // Validate Time Formats
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!timeRegex.test(call) || !timeRegex.test(wrap)) {
+      toast({ title: "Invalid time", description: "Use HH:MM format (24h).", variant: "destructive" });
+      return;
+    }
+
+    if (actualStart && !timeRegex.test(actualStart)) {
+      toast({ title: "Invalid actual start", description: "Use HH:MM format or leave blank.", variant: "destructive" });
+      return;
+    }
+    if (actualWrap && !timeRegex.test(actualWrap)) {
+      toast({ title: "Invalid actual wrap", description: "Use HH:MM format or leave blank.", variant: "destructive" });
+      return;
+    }
+
+    // Simple Order Check
+    const startVal = actualStart || call;
+    const endVal = actualWrap || wrap;
+    if (startVal === endVal) {
+      toast({ title: "Zero Duration", description: "Call and Wrap times cannot be identical.", variant: "destructive" });
+      return;
+    }
+
+    onSave({ 
+      date, 
+      dayType, 
+      location: location.trim(), 
+      call, 
+      actualStart: actualStart || undefined, 
+      wrap, 
+      actualWrap: actualWrap || undefined, 
+      mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
+      travelMinutes: Math.max(0, travelMinutes), 
+      isNight, 
+      perDiem, 
+      shootingOT, 
+      shootingOTMinutes: shootingOT ? Math.max(0, shootingOTMinutes) : undefined, 
+      consecutiveDay 
+    });
+    
+    toast({ title: "Changes Saved", description: `Time for ${date} updated.` });
   };
 
   return (
@@ -86,28 +153,45 @@ export const EntryEditor = ({ entry, onSave, onCancel, basicHours = 10 }: Props)
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={input} />
       </Field>
       <Field label="Location">
-        <input value={location} maxLength={80} onChange={(e) => setLocation(e.target.value)} className={input} />
+        <div className="space-y-1">
+          <input 
+            value={location} 
+            maxLength={80} 
+            onChange={(e) => setLocation(e.target.value)} 
+            list="editor-locations"
+            className={input} 
+          />
+          <datalist id="editor-locations">
+            {recentLocations.map(loc => (
+              <option key={loc} value={loc} />
+            ))}
+          </datalist>
+        </div>
       </Field>
 
       <Field label="Call (sheet)">
         <input value={call} onChange={(e) => {
-          const next = e.target.value;
-          setCall(next);
-          if (/^\d{2}:\d{2}$/.test(next)) setWrap(addHoursToTime(next, basicHours));
+          const fmt = formatTimeInput(e.target.value);
+          setCall(fmt);
+          if (/^\d{2}:\d{2}$/.test(fmt)) setWrap(addHoursToTime(fmt, basicHours));
         }} placeholder="07:30" className={input + " font-mono tabular-nums"} />
       </Field>
       <Field label="Actual start">
-        <input value={actualStart} onChange={(e) => setActualStart(e.target.value)} placeholder="06:45" className={input + " font-mono tabular-nums"} />
+        <input value={actualStart} onChange={(e) => setActualStart(formatTimeInput(e.target.value))} placeholder="06:45" className={input + " font-mono tabular-nums"} />
       </Field>
       <Field label="Wrap (sheet)">
-        <input value={wrap} onChange={(e) => setWrap(e.target.value)} placeholder="20:00" className={input + " font-mono tabular-nums"} />
+        <input value={wrap} onChange={(e) => setWrap(formatTimeInput(e.target.value))} placeholder="20:00" className={input + " font-mono tabular-nums"} />
       </Field>
       <Field label="Actual wrap">
-        <input value={actualWrap} onChange={(e) => setActualWrap(e.target.value)} placeholder="21:30" className={input + " font-mono tabular-nums"} />
+        <input value={actualWrap} onChange={(e) => setActualWrap(formatTimeInput(e.target.value))} placeholder="21:30" className={input + " font-mono tabular-nums"} />
       </Field>
 
       <Field label="Meal (mins)">
-        <input type="number" min={0} max={240} value={mealMinutes} onChange={(e) => setMeal(Number(e.target.value) || 0)} className={input + " font-mono tabular-nums"} />
+        <input type="number" min={0} max={240} value={basicHours === 10 ? 0 : mealMinutes}
+          disabled={basicHours === 10}
+          onChange={(e) => setMeal(Number(e.target.value) || 0)}
+          className={input + " font-mono tabular-nums disabled:opacity-40"} />
+        {basicHours === 10 && <p className="text-[8px] uppercase tracking-widest text-primary font-mono mt-1">Running Lunch (10h Day)</p>}
       </Field>
       <Field label="Travel (mins)">
         <input type="number" min={0} max={600} value={travelMinutes} onChange={(e) => setTravel(Number(e.target.value) || 0)} className={input + " font-mono tabular-nums"} />
@@ -172,8 +256,8 @@ const input =
   "w-full bg-obsidian border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60 transition-colors";
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
-  <div className={`space-y-1 ${className}`}>
-    <label className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">{label}</label>
+  <div className={`space-y-1.5 ${className}`}>
+    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-0.5">{label}</label>
     {children}
   </div>
 );

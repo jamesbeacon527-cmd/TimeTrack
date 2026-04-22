@@ -97,14 +97,20 @@ const toMinutes = (hhmm: string) => {
   return (h || 0) * 60 + (m || 0);
 };
 
-export function workedHours(entry: DayEntry): number {
+export function workedHours(entry: DayEntry, rates?: RateConfig): number {
   if (!entry.call || !entry.wrap) return 0;
   const startStr = entry.actualStart && /^\d{2}:\d{2}$/.test(entry.actualStart) ? entry.actualStart : entry.call;
   const endStr = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? entry.actualWrap : entry.wrap;
   const start = toMinutes(startStr);
   let end = toMinutes(endStr);
   if (end <= start) end += 24 * 60; // crossed midnight
-  const worked = end - start - (entry.mealMinutes || 0);
+  
+  // Meal deduction
+  // Running lunch: If basic hours is 10, we ignore meal minutes as they are worked.
+  const isRunningLunch = rates?.basicHours === 10;
+  const meal = isRunningLunch ? 0 : (entry.mealMinutes || 0);
+  
+  const worked = end - start - meal;
   return Math.max(0, worked / 60);
 }
 
@@ -138,9 +144,33 @@ export type DayBreakdown = {
   total: number;
 };
 
+export const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
+
+/**
+ * Heuristic to determine the worked day index (1-7) within a week.
+ * Projects usually follow Monday-start ISO weeks.
+ */
+export function getConsecutiveDay(date: string): number {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun, 1=Mon...
+  return day === 0 ? 7 : day;
+}
+
 export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
-  const worked = workedHours(entry);
+  const workedTotal = workedHours(entry, rates);
   const preCall = preCallHours(entry);
+  
+  // Pre-call fix: Worked hours from the function includes everything on set.
+  // We want to calculate basic/OT from the "post-call" portion, and handle pre-call separately.
+  // Actually, usually pre-call adds to the total day. 
+  // But the user says "Pre-call is added twice".
+  // If we count total hours (including pre-call) for OT, we shouldn't add full pre-call rate on top.
+  // We'll calculate the total worked, find OT, then add ONLY the premium (preCallRate - 1) for pre-call hours.
+  
+  // Minimum paid hours (per user request: "Even if worked less then 10 hours still count a minimum of 10 paid").
+  // We use max(rates.basicHours, workedTotal) to ensure they get at least their full basic day if they work less.
+  const worked = Math.max(rates.basicHours || 10, workedTotal);
+  
   const basic = Math.min(worked, rates.basicHours);
   const overtime = Math.max(0, worked - rates.basicHours);
   // Shooting OT only applies when the entry opts in. Otherwise all OT is 1.5×.
@@ -157,8 +187,10 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
 
   // Consecutive-day premium (BECTU 6th/7th day rules).
   let consecutiveMultiplier = 1;
-  if (entry.consecutiveDay === 6) consecutiveMultiplier = rates.sixthDayMultiplier;
-  else if (entry.consecutiveDay && entry.consecutiveDay >= 7) consecutiveMultiplier = rates.seventhDayMultiplier;
+  const dayIndex = entry.consecutiveDay ?? getConsecutiveDay(entry.date);
+  
+  if (dayIndex === 6) consecutiveMultiplier = rates.sixthDayMultiplier;
+  else if (dayIndex >= 7) consecutiveMultiplier = rates.seventhDayMultiplier;
 
   const stackedMultiplier = dayTypeMultiplier * consecutiveMultiplier;
 
@@ -167,10 +199,15 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
     ? rates.dayRate * (rates.basicHours > 0 ? basic / rates.basicHours : 1)
     : basic * rates.hourlyRate;
 
+  // Pre-call premium: 
+  // Since `worked` already includes pre-call, it's already paid at basic or OT rate.
+  // We only add the "extra" multiplier part.
+  const preCallPremium = preCall * rates.hourlyRate * Math.max(0, rates.preCallRate - 1);
+
   const basicPay = rawBasicPay * stackedMultiplier;
   const ot15Pay = ot15 * rates.hourlyRate * 1.5 * stackedMultiplier;
   const ot2Pay = ot2 * rates.hourlyRate * 2 * stackedMultiplier;
-  const preCallPay = preCall * rates.hourlyRate * rates.preCallRate * stackedMultiplier;
+  const preCallPay = preCallPremium * stackedMultiplier;
   const travelPay = travelHours * rates.hourlyRate * stackedMultiplier;
   const nightPay = entry.isNight ? rates.nightPremium : 0;
   const perDiemPay = entry.perDiem ? rates.perDiem : 0;

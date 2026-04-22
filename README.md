@@ -1,4 +1,4 @@
-# SlateTrack — UK Film Crew Hours Tracker
+# TimeTrack — UK Film Crew Hours Tracker
 
 Local-first web app for UK film crew to log daily call/wrap times, calculate overtime (1.5x / 2x), night premiums, and produce a production charge summary.
 

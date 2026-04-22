@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayEntry, RateConfig } from "@/lib/calc";
-import { DAY_TYPE_LABELS, breakdown, fmtGBP } from "@/lib/calc";
+import { DAY_TYPE_LABELS, breakdown, fmtGBP, getConsecutiveDay, fmtDate } from "@/lib/calc";
 import { DayTimeline } from "@/components/DayTimeline";
 
 type Props = {
@@ -101,11 +101,21 @@ export const WeekCalendar = ({ entries, rates }: Props) => {
           const key = fmtDate(d);
           const list = byDate.get(key) || [];
           const isToday = key === todayKey;
+
+          const dayIndex = getConsecutiveDay(key);
+          const hasWorked = list.some(e => e.dayType !== 'rest');
+          
+          let outlineClass = "border-border";
+          if (isToday) outlineClass = "border-primary/40";
+          else if (hasWorked) {
+            if (dayIndex === 6) outlineClass = "border-amber/50";
+            else if (dayIndex === 7) outlineClass = "border-ruby/50";
+            else outlineClass = "border-primary/25";
+          }
+
           return (
             <div key={key}
-              className={`flex flex-col sm:flex-row gap-3 bg-carbon/50 border rounded-xl p-3 ${
-                isToday ? "border-primary/40" : "border-border"
-              }`}>
+              className={`flex flex-col sm:flex-row gap-3 bg-carbon/50 border rounded-xl p-3 ${outlineClass}`}>
               <div className="sm:w-28 shrink-0 flex sm:flex-col sm:justify-center items-baseline sm:items-start gap-2 sm:gap-0.5">
                 <span className={`text-[10px] font-mono uppercase tracking-widest ${isToday ? "text-primary" : "text-muted-foreground"}`}>
                   {fmtDay(d)}
@@ -133,7 +143,7 @@ export const WeekCalendar = ({ entries, rates }: Props) => {
                           </span>
                           {e.location && <span className="text-foreground/70 truncate normal-case tracking-normal">· {e.location}</span>}
                         </span>
-                        <span className="text-accent shrink-0 normal-case tracking-normal">{fmtGBP(b.total)}</span>
+                        <span className="text-primary shrink-0 normal-case tracking-normal font-bold">{fmtGBP(b.total)}</span>
                       </div>
                       <DayTimeline entry={e} rates={rates} />
                     </div>

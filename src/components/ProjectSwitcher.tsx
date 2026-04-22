@@ -26,12 +26,24 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
   const active = projects.find((p) => p.id === activeId);
 
   const handleNew = () => {
-    const name = window.prompt("New production name", "");
-    if (name && name.trim()) onCreate(name.trim());
+    const name = window.prompt("New production name (max 50 chars)", "");
+    if (!name) return;
+    const trimmed = name.trim().slice(0, 50);
+    if (!trimmed) {
+      alert("Project name cannot be empty.");
+      return;
+    }
+    onCreate(trimmed);
   };
   const handleRename = (p: Project) => {
     const name = window.prompt("Rename production", p.name);
-    if (name && name.trim()) onRename(p.id, name.trim());
+    if (!name) return;
+    const trimmed = name.trim().slice(0, 50);
+    if (!trimmed) {
+      alert("Project name cannot be empty.");
+      return;
+    }
+    onRename(p.id, trimmed);
   };
   const handleDelete = (p: Project) => {
     if (confirm(`Delete "${p.name}" and all its entries? This cannot be undone.`)) onDelete(p.id);

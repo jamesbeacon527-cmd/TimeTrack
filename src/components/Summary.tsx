@@ -8,7 +8,7 @@ type Props = { entries: DayEntry[]; rates: RateConfig; project: string };
 const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: string) => {
   const t = totals(entries, rates);
   const rows = [
-    ["SlateTrack Invoice", project],
+    ["TimeTrack Invoice", project],
     ["Generated", new Date().toLocaleString("en-GB")],
     [],
     ["Date", "Day Type", "Location", "Call", "Actual Start", "Wrap", "Meal (m)", "Travel (m)", "Day#", "Night", "Per Diem"],
@@ -28,7 +28,7 @@ const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: strin
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `slatetrack-${project.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `timetrack-${project.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   toast({ title: "Invoice exported", description: a.download });
@@ -39,14 +39,11 @@ export const Summary = ({ entries, rates, project }: Props) => {
   return (
     <div className="bg-slate-glass/40 p-1 rounded-2xl border border-border backdrop-blur-sm">
       <div className="bg-obsidian rounded-xl p-8 space-y-10">
-        <div>
-          <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-6">Production Summary</h3>
-          <div className="grid grid-cols-2 gap-8">
-            <Stat label="Standard Hours" value={fmtHours(t.basicHours)} />
-            <Stat label="Shooting OT @ 2x" value={fmtHours(t.ot2Hours)} tone="ruby" />
-            <Stat label="Overtime @ 1.5x" value={fmtHours(t.ot15Hours)} tone="primary" />
-            <Stat label="Travel Hours" value={fmtHours(t.travelHours)} />
-          </div>
+        <div className="grid grid-cols-2 gap-8">
+          <Stat label="Standard Hours" value={fmtHours(t.basicHours)} />
+          <Stat label="Shooting OT @ 2x" value={fmtHours(t.ot2Hours)} tone="ruby" />
+          <Stat label="Overtime @ 1.5x" value={fmtHours(t.ot15Hours)} tone="amber" />
+          <Stat label="Travel Hours" value={fmtHours(t.travelHours)} />
         </div>
 
         <div className="border-t border-border pt-8">
@@ -58,7 +55,7 @@ export const Summary = ({ entries, rates, project }: Props) => {
                 <span className="text-lg text-muted-foreground">.{(t.subtotal.toFixed(2).split(".")[1] || "00")}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-2 font-mono">
-                + VAT {fmtGBP(t.vat)} = <span className="text-accent">{fmtGBP(t.grand)}</span>
+                + VAT {fmtGBP(t.vat)} = <span className="text-primary font-bold">{fmtGBP(t.grand)}</span>
               </p>
               {t.perDiems > 0 && (
                 <p className="text-xs text-muted-foreground mt-1 font-mono">
@@ -81,11 +78,14 @@ export const Summary = ({ entries, rates, project }: Props) => {
   );
 };
 
-const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" }) => (
+const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" | "amber" }) => (
   <div className="space-y-1">
-    <span className="text-[10px] uppercase text-muted-foreground">{label}</span>
-    <p className={`text-2xl font-mono tracking-tighter ${
-      tone === "primary" ? "text-primary" : tone === "ruby" ? "text-ruby" : "text-foreground"
+    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">{label}</span>
+    <p className={`text-3xl font-mono tracking-tighter ${
+      tone === "primary" ? "text-primary" : 
+      tone === "ruby" ? "text-ruby" : 
+      tone === "amber" ? "text-amber" :
+      "text-foreground"
     }`}>{value}</p>
   </div>
 );
