@@ -9,7 +9,7 @@ service cloud.firestore {
     // Helper functions
     function isSignedIn() { return request.auth != null; }
     function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
-    function isOwner(userId) { return isVerified() && request.auth.uid == userId; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
@@ -17,7 +17,6 @@ service cloud.firestore {
     // User Profile Validation
     function isValidUser(data) {
       return data.keys().hasAll(['id', 'email', 'displayName', 'createdAt'])
-          && data.keys().size() == 4
           && data.id == request.auth.uid
           && data.email is string && data.email.size() <= 256
           && data.displayName is string && data.displayName.size() <= 128
@@ -26,16 +25,15 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && isValidUser(incoming()) 
                      && incoming().createdAt == existing().createdAt
-                     && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email']);
+                     && incoming().diff(existing()).affectedKeys().hasAny(['displayName', 'email', 'updatedAt']);
     }
 
     // Project Validation
     function isValidProject(data) {
       return data.keys().hasAll(['id', 'name', 'createdAt', 'rates'])
-          && data.keys().size() == 4
           && data.id is string && data.id.size() <= 128
           && data.name is string && data.name.size() <= 128
           && data.createdAt is string
