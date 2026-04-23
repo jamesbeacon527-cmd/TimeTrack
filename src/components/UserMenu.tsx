@@ -22,8 +22,16 @@ export function UserMenu() {
     setIsLoggingIn(true);
     try {
       await login();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Could not complete Google login.";
+    } catch (err: any) {
+      let message = "Could not complete Google login.";
+      if (err.code === "auth/unauthorized-domain") {
+        message = "This domain is not authorized in your Firebase console. Please add your Vercel URL to Authentication > Settings > Authorized Domains.";
+      } else if (err.code === "auth/popup-closed-by-user") {
+        message = "Login was cancelled. Please keep the window open to sync.";
+      } else if (err.message) {
+        message = err.message;
+      }
+      
       toast({
         title: "Sync Failed",
         description: message,
