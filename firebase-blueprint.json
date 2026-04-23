@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with basic info",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "createdAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A film/TV production project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "rates": { "$ref": "RateConfig" }
+      },
+      "required": ["id", "name", "createdAt", "rates"]
+    },
+    "RateConfig": {
+      "title": "Rate Configuration",
+      "description": "Financial rates for the production",
+      "type": "object",
+      "properties": {
+        "basicRate": { "type": "number" },
+        "basicHours": { "type": "number" },
+        "otThreshold": { "type": "number" },
+        "ot15Cap": { "type": "number" },
+        "vatRate": { "type": "number" },
+        "currency": { "type": "string" },
+        "dayTypeRates": { "type": "object" },
+        "shootingOT": { "type": "boolean" },
+        "shootingOTMinutes": { "type": "number" }
+      }
+    },
+    "DayEntry": {
+      "title": "Day Entry",
+      "description": "A single day work log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "dayType": { "type": "string" },
+        "call": { "type": "string" },
+        "wrap": { "type": "string" },
+        "actualStart": { "type": "string" },
+        "actualWrap": { "type": "string" },
+        "meal": { "type": "number" },
+        "travel": { "type": "number" },
+        "night": { "type": "boolean" },
+        "perDiem": { "type": "boolean" },
+        "shootingOT": { "type": "boolean" },
+        "shootingOTMinutes": { "type": "number" },
+        "location": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "date", "dayType", "call", "wrap"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "User projects"
+    },
+    "/users/{userId}/projects/{projectId}/entries/{entryId}": {
+      "schema": "DayEntry",
+      "description": "Work log entries for a specific project"
+    }
+  }
+}

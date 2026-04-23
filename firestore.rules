@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isOwner(userId) { return isVerified() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // User Profile Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'displayName', 'createdAt'])
+          && data.keys().size() == 4
+          && data.id == request.auth.uid
+          && data.email is string && data.email.size() <= 256
+          && data.displayName is string && data.displayName.size() <= 128
+          && data.createdAt is string; 
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+                     && incoming().createdAt == existing().createdAt
+                     && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email']);
+    }
+
+    // Project Validation
+    function isValidProject(data) {
+      return data.keys().hasAll(['id', 'name', 'createdAt', 'rates'])
+          && data.keys().size() == 4
+          && data.id is string && data.id.size() <= 128
+          && data.name is string && data.name.size() <= 128
+          && data.createdAt is string
+          && data.rates is map;
+    }
+
+    match /users/{userId}/projects/{projectId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(projectId);
+      allow create: if isOwner(userId) && isValidId(projectId) && isValidProject(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidId(projectId) && isValidProject(incoming())
+                     && incoming().createdAt == existing().createdAt
+                     && incoming().id == existing().id
+                     && (
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'rates'])
+                     );
+      allow delete: if isOwner(userId) && isValidId(projectId);
+
+      // Entry Validation
+      function isValidEntry(data) {
+        return data.keys().hasAll(['id', 'date', 'dayType', 'call', 'wrap'])
+            && data.id is string && data.id.size() <= 128
+            && data.date is string && data.date.size() <= 10
+            && data.dayType is string
+            && data.call is string && data.call.size() <= 5
+            && data.wrap is string && data.wrap.size() <= 5;
+      }
+
+      match /entries/{entryId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId) && isValidId(entryId);
+        allow create: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming())
+                       && incoming().id == existing().id;
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+    }
+  }
+}

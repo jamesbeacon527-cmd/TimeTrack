@@ -12,6 +12,7 @@ import { ProjectSetup } from "@/components/ProjectSetup";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/UserMenu";
 import { CalendarRange, ClipboardList, FileText, Settings2, X, LayoutGrid } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
@@ -63,6 +64,7 @@ const Index = () => {
               </h1>
             </button>
             <div className="flex items-center gap-2 md:hidden">
+              <UserMenu />
               <ThemeToggle />
               {view !== "home" && (
                 <Button variant="outlineGlass" size="icon" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings" className="h-8 w-8">
@@ -72,7 +74,8 @@ const Index = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full md:w-auto max-w-full overflow-x-auto pb-1 sm:pb-0">
-            <div className="hidden md:block">
+            <div className="hidden md:flex items-center gap-2">
+              <UserMenu />
               <ThemeToggle />
             </div>
             
@@ -92,20 +95,22 @@ const Index = () => {
 
             <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
               {[
-                { id: "home", icon: LayoutGrid, label: "Dash" },
-                { id: "capture", icon: ClipboardList, label: "Log" },
-                { id: "calendar", icon: CalendarRange, label: "Cal" },
-                { id: "invoice", icon: FileText, label: "Report" },
+                { id: "home", icon: LayoutGrid, label: "Dash", full: "Dashboard" },
+                { id: "capture", icon: ClipboardList, label: "Log", full: "Capture Log" },
+                { id: "calendar", icon: CalendarRange, label: "Cal", full: "Calendar" },
+                { id: "invoice", icon: FileText, label: "Report", full: "Reports" },
               ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setView(item.id as View)}
                   aria-pressed={view === item.id}
-                  className={`flex items-center justify-center gap-1.5 px-2 md:px-3 py-1.5 rounded-md text-[9px] md:text-[10px] font-semibold uppercase tracking-widest transition-colors flex-1 min-w-[65px] md:min-w-0 ${
-                    view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  className={`flex items-center justify-center gap-1.5 px-2 md:px-4 py-1.5 rounded-md text-[9px] md:text-[10px] font-semibold uppercase tracking-widest transition-all flex-1 min-w-[65px] md:min-w-[100px] ${
+                    view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-carbon-light/50"
                   }`}>
-                  <item.icon className="size-3 md:size-3.5 shrink-0" /> <span className="whitespace-nowrap">{item.label}</span>
+                  <item.icon className="size-3 md:size-3.5 shrink-0" />
+                  <span className="whitespace-nowrap md:hidden">{item.label}</span>
+                  <span className="whitespace-nowrap hidden md:inline">{item.full}</span>
                 </button>
               ))}
             </div>

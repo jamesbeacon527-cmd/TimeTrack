@@ -257,10 +257,10 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       </div>
 
       <div className="md:col-span-2 flex flex-col md:flex-row gap-3 pt-2">
-        <Button type="submit" variant="volt" size="xl" className="flex-1 h-14 md:h-auto">CAPTURE ENTRY</Button>
-        <Button type="reset" variant="outlineGlass" size="xl" className="h-14 md:h-auto"
+        <Button type="submit" variant="volt" className="flex-[2] h-12 md:h-14 text-[10px] md:text-sm uppercase tracking-widest">CAPTURE ENTRY</Button>
+        <Button type="reset" variant="outlineGlass" className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
           onClick={() => { setLocation(""); setCall("07:30"); setActualStart(""); setWrap(addHoursToTime("07:30", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
-          Reset
+          Reset Form
         </Button>
       </div>
     </form>
