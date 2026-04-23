@@ -20,18 +20,15 @@ type Props = {
 
 export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDuplicate, onRename }: Props) => {
   return (
-    <div className="space-y-12 pb-20">
+    <div className="space-y-12 pb-20 px-1 md:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-3xl font-light tracking-tight text-foreground">Productions</h2>
           <p className="text-sm text-muted-foreground mt-1">Manage your active production timecards and summaries.</p>
         </div>
-        <Button variant="volt" size="xl" onClick={onCreate} className="w-full md:w-auto h-14 px-8">
-          <Plus className="size-5 mr-3" /> Start New Production
-        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((p) => {
           const t = totals(p.entries, p.rates);
           const lastEntry = p.entries[0]?.date;
@@ -52,26 +49,46 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button 
-                      onClick={(e) => e.stopPropagation()} 
-                      className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors outline-none"
+                      type="button"
+                      className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors outline-none focus:ring-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                     >
-                      <MoreVertical className="size-4" />
+                      <MoreVertical className="size-5 md:size-4" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-obsidian border-border">
-                    <DropdownMenuItem onSelect={() => {
-                      const name = prompt("Rename production:", p.name);
-                      if (name) onRename(p.id, name);
-                    }}>
+                  <DropdownMenuContent align="end" className="w-48 bg-obsidian border-border z-[100]">
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        // Delay prompt slightly to ensure menu closes or doesn't interfere
+                        setTimeout(() => {
+                          const name = prompt("Rename production:", p.name);
+                          if (name !== null && name.trim()) onRename(p.id, name.trim());
+                        }, 100);
+                      }}
+                    >
                       <Edit3 className="size-4 mr-2" /> Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => onDuplicate(p.id)}>
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={() => onDuplicate(p.id)}
+                    >
                       <Copy className="size-4 mr-2" /> Duplicate
                     </DropdownMenuItem>
                     <div className="h-px bg-border my-1" />
-                    <DropdownMenuItem onSelect={() => {
-                      if (confirm(`Delete "${p.name}"? This cannot be undone.`)) onDelete(p.id);
-                    }} className="text-ruby focus:text-ruby">
+                    <DropdownMenuItem 
+                      className="text-ruby focus:text-ruby cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setTimeout(() => {
+                          if (confirm(`Delete "${p.name}"? This cannot be undone.`)) onDelete(p.id);
+                        }, 100);
+                      }}
+                    >
                       <Trash2 className="size-4 mr-2" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>

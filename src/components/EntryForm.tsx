@@ -133,8 +133,8 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const isTravel = dayType === "travel";
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-2 gap-x-6 gap-y-6 relative z-10">
-      <Field label="Day Type" className="col-span-2">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-6 relative z-10">
+      <Field label="Day Type" className="md:col-span-2">
         <div className="flex flex-wrap gap-2">
           {DAY_TYPES.map((t) => {
             const active = t === dayType;
@@ -144,9 +144,9 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 type="button"
                 onClick={() => setDayType(t)}
                 aria-pressed={active}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest border transition-colors ${
+                className={`px-3 py-2 rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-widest border transition-colors ${
                   active
-                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_16px_hsl(var(--primary)/0.35)]"
+                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
                     : "bg-obsidian text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
                 }`}
               >
@@ -157,11 +157,11 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         </div>
       </Field>
 
-      <Field label="Date of Session" className="col-span-2 md:col-span-1">
+      <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
           className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors" />
       </Field>
-      <Field label="Unit Location" className="col-span-2 md:col-span-1">
+      <Field label="Unit Location">
         <div className="space-y-1">
           <input 
             value={location} 
@@ -176,41 +176,38 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
               <option key={loc} value={loc} />
             ))}
           </datalist>
-          <p className="text-[9px] uppercase tracking-widest text-muted-foreground/60 font-mono px-1">
-            {recentLocations.length > 0 ? "Suggestions available" : "New location"}
-          </p>
         </div>
       </Field>
 
       {!isRest && !isTravel && (
         <>
-          <Field label="Call Time" className="col-span-2 md:col-span-1">
+          <Field label="Call Time">
             <input value={call} onChange={(e) => handleCallChange(e.target.value)} placeholder="07:30"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-4 text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet · auto-sets wrap +{basicHours}h</p>
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60" />
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
-          <Field label="Actual Start" className="col-span-2 md:col-span-1">
+          <Field label="Actual Start">
             <input value={actualStart} onChange={(e) => setActualStart(formatTimeInput(e.target.value))} placeholder="06:45"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-4 text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">If pre-call (else blank)</p>
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
           </Field>
-          <Field label="Wrap Time" className="col-span-2 md:col-span-1">
+          <Field label="Wrap Time">
             <input value={wrap} onChange={(e) => setWrap(formatTimeInput(e.target.value))} placeholder="20:45"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-4 text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap from call sheet</p>
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
-          <Field label="Actual Wrap" className="col-span-2 md:col-span-1">
+          <Field label="Actual Wrap">
             <input value={actualWrap} onChange={(e) => setActualWrap(formatTimeInput(e.target.value))} placeholder="21:30"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-4 text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">If ran late (else blank) — drives OT</p>
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If ran late</p>
           </Field>
 
-          <Field label="Meal Break (mins)">
+          <Field label="Meal (mins)">
             <input type="number" min={0} max={240} value={basicHours === 10 ? 0 : mealMinutes}
               disabled={basicHours === 10}
               onChange={(e) => setMeal(Number(e.target.value) || 0)}
               className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 disabled:opacity-40" />
-            {basicHours === 10 && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1">Running Lunch (10h Day)</p>}
+            {basicHours === 10 && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1 font-bold italic">Running Lunch</p>}
           </Field>
           <Field label="Travel (mins)">
             <input type="number" min={0} max={600} value={travelMinutes}
@@ -220,45 +217,48 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         </>
       )}
 
-      <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {!isRest && !isTravel && (
           <label className="flex items-center gap-3 cursor-pointer select-none bg-obsidian/60 border border-border rounded-lg px-4 py-3 hover:border-primary/40 transition-colors">
             <input type="checkbox" checked={isNight} onChange={(e) => setNight(e.target.checked)}
               className="size-4 accent-[hsl(var(--accent))]" />
-            <span className="text-sm text-foreground">Night shoot <span className="text-muted-foreground">— premium</span></span>
+            <span className="text-xs text-foreground font-medium">Night shoot</span>
           </label>
         )}
         <label className="flex items-center gap-3 cursor-pointer select-none bg-obsidian/60 border border-border rounded-lg px-4 py-3 hover:border-primary/40 transition-colors">
           <input type="checkbox" checked={perDiem} onChange={(e) => setPerDiem(e.target.checked)}
             className="size-4 accent-[hsl(var(--primary))]" />
-          <span className="text-sm text-foreground">Per diem <span className="text-muted-foreground">— claim daily allowance</span></span>
+          <span className="text-xs text-foreground font-medium">Per diem</span>
         </label>
         {!isRest && !isTravel && (
-          <label className="sm:col-span-2 flex flex-wrap items-center gap-3 cursor-pointer select-none bg-obsidian/60 border border-border rounded-lg px-4 py-3 hover:border-ruby/40 transition-colors">
-            <input type="checkbox" checked={shootingOT} onChange={(e) => setShootingOT(e.target.checked)}
-              className="size-4 accent-[hsl(var(--ruby))]" />
-            <span className="text-sm text-foreground flex-1 min-w-[10rem]">Shooting OT <span className="text-muted-foreground">— window after basic at 2×</span></span>
-            <span className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
-              <input
-                type="number"
-                min={0}
-                max={480}
-                step={15}
-                value={shootingOTMinutes}
-                disabled={!shootingOT}
-                onChange={(e) => setShootingOTMinutes(Math.max(0, Number(e.target.value) || 0))}
-                onClick={(e) => e.stopPropagation()}
-                className="w-20 bg-obsidian border border-border rounded-md px-2 py-1.5 text-sm text-foreground font-mono tabular-nums text-right focus:outline-none focus:border-ruby/60 disabled:opacity-40"
-              />
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">mins @ 2×</span>
-            </span>
+          <label className="sm:col-span-2 flex flex-col md:flex-row md:items-center gap-3 cursor-pointer select-none bg-obsidian/60 border border-border rounded-lg px-4 py-3 hover:border-ruby/40 transition-colors">
+            <div className="flex items-center gap-3 flex-1">
+              <input type="checkbox" checked={shootingOT} onChange={(e) => setShootingOT(e.target.checked)}
+                className="size-4 accent-[hsl(var(--ruby))]" />
+              <span className="text-xs text-foreground font-medium">Shooting OT <span className="text-muted-foreground md:inline hidden">— at 2×</span></span>
+            </div>
+            {shootingOT && (
+              <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
+                <input
+                  type="number"
+                  min={0}
+                  max={480}
+                  step={15}
+                  value={shootingOTMinutes}
+                  onChange={(e) => setShootingOTMinutes(Math.max(0, Number(e.target.value) || 0))}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-20 bg-obsidian border border-border rounded-md px-2 py-1 text-sm text-foreground font-mono tabular-nums text-right focus:outline-none focus:border-ruby/60"
+                />
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">mins</span>
+              </div>
+            )}
           </label>
         )}
       </div>
 
-      <div className="col-span-2 flex gap-3 pt-2">
-        <Button type="submit" variant="volt" size="xl" className="flex-1">CAPTURE ENTRY</Button>
-        <Button type="reset" variant="outlineGlass" size="xl"
+      <div className="md:col-span-2 flex flex-col md:flex-row gap-3 pt-2">
+        <Button type="submit" variant="volt" size="xl" className="flex-1 h-14 md:h-auto">CAPTURE ENTRY</Button>
+        <Button type="reset" variant="outlineGlass" size="xl" className="h-14 md:h-auto"
           onClick={() => { setLocation(""); setCall("07:30"); setActualStart(""); setWrap(addHoursToTime("07:30", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
           Reset
         </Button>

@@ -21,13 +21,15 @@ type CalView = "week" | "month";
 const Index = () => {
   const {
     projects, active, setActive, createProject, renameProject, deleteProject, duplicateProject,
-    entries, addEntry, updateEntry, removeEntry, rates, setRates, project, setProject,
+    entries, addEntry, updateEntry, removeEntry, rates, setRates, project, setProject, isLoading,
   } = useProjects();
+
   const [showRates, setShowRates] = useState(false);
   const [view, setView] = useState<View>("home");
   const [calView, setCalView] = useState<CalView>("week");
 
   const recentLocations = useMemo(() => {
+    if (isLoading) return [];
     // Show most recent locations first
     const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
     const locs = sorted
@@ -35,83 +37,84 @@ const Index = () => {
       .filter((loc): loc is string => !!loc && loc.length > 0);
     
     return Array.from(new Set(locs));
-  }, [entries]);
+  }, [entries, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center font-mono uppercase tracking-[0.3em] text-xs">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-4 bg-primary rounded-full animate-pulse shadow-[0_0_12px_hsl(var(--primary)/0.5)]" />
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300">
-      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-12">
-        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-8 border-b border-border/60 pb-12 shrink-0">
+    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
+      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12">
+        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0">
           <div className="flex justify-between items-start w-full md:w-auto">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-medium block mb-2">Production Interface v1.0</span>
-              <h1 className="text-2xl font-light tracking-tight text-foreground flex items-center gap-3">
-                <span className="size-3 bg-primary rounded-full animate-pulse shadow-[0_0_12px_hsl(var(--primary)/0.5)]" aria-hidden />
+              <span className="text-[9px] md:text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-medium block mb-1 md:mb-2 italic">Production Interface v1.1 Mobile-Ready</span>
+              <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
+                <img src="/logo.svg" alt="TimeTrack Logo" className="size-6 md:size-8" />
                 TIME<span className="font-semibold italic text-foreground tracking-tighter">TRACK</span>
               </h1>
             </button>
-            <div className="md:hidden">
+            <div className="flex items-center gap-2 md:hidden">
               <ThemeToggle />
+              {view !== "home" && (
+                <Button variant="outlineGlass" size="icon" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings" className="h-8 w-8">
+                  {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
+                </Button>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full md:w-auto max-w-full overflow-x-auto pb-1 sm:pb-0">
             <div className="hidden md:block">
               <ThemeToggle />
             </div>
             
             {view !== "home" && (
-              <ProjectSwitcher
-                projects={projects}
-                activeId={active.id}
-                onSelect={setActive}
-                onCreate={createProject}
-                onRename={renameProject}
-                onDuplicate={duplicateProject}
-                onDelete={deleteProject}
-              />
+              <div className="w-full sm:w-auto">
+                <ProjectSwitcher
+                  projects={projects}
+                  activeId={active.id}
+                  onSelect={setActive}
+                  onCreate={createProject}
+                  onRename={renameProject}
+                  onDuplicate={duplicateProject}
+                  onDelete={deleteProject}
+                />
+              </div>
             )}
 
-            <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1">
-              <button
-                type="button"
-                onClick={() => setView("home")}
-                aria-pressed={view === "home"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                  view === "home" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}>
-                <LayoutGrid className="size-3.5" /> Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("capture")}
-                aria-pressed={view === "capture"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                  view === "capture" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}>
-                <ClipboardList className="size-3.5" /> Capture
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("calendar")}
-                aria-pressed={view === "calendar"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                  view === "calendar" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}>
-                <CalendarRange className="size-3.5" /> Calendar
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("invoice")}
-                aria-pressed={view === "invoice"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                  view === "invoice" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}>
-                <FileText className="size-3.5" /> Invoice
-              </button>
+            <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
+              {[
+                { id: "home", icon: LayoutGrid, label: "Dash" },
+                { id: "capture", icon: ClipboardList, label: "Log" },
+                { id: "calendar", icon: CalendarRange, label: "Cal" },
+                { id: "invoice", icon: FileText, label: "Report" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setView(item.id as View)}
+                  aria-pressed={view === item.id}
+                  className={`flex items-center justify-center gap-1.5 px-2 md:px-3 py-1.5 rounded-md text-[9px] md:text-[10px] font-semibold uppercase tracking-widest transition-colors flex-1 min-w-[65px] md:min-w-0 ${
+                    view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}>
+                  <item.icon className="size-3 md:size-3.5 shrink-0" /> <span className="whitespace-nowrap">{item.label}</span>
+                </button>
+              ))}
             </div>
             {view !== "home" && (
-              <Button variant="outlineGlass" size="default" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings">
-                {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
-              </Button>
+              <div className="hidden md:block">
+                <Button variant="outlineGlass" size="default" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings">
+                  {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
+                </Button>
+              </div>
             )}
           </div>
         </header>
@@ -138,94 +141,167 @@ const Index = () => {
               }}
             />
           ) : (
-            <PanelGroup direction="horizontal" className="h-full" key={view}>
-              {view === "capture" ? (
-              <>
-                <Panel id="log-pane" order={1} defaultSize={30} minSize={20}>
-                  <div className="h-full pr-10 overflow-y-auto space-y-6 custom-scrollbar">
-                    <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                      <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Recent Captured Time</h3>
-                      <span className="text-[10px] font-mono text-muted-foreground bg-carbon px-2 py-0.5 rounded-full border border-border">
-                        {entries.length} {entries.length === 1 ? "DAY" : "DAYS"}
-                      </span>
-                    </div>
-                    <RecentLog entries={entries} rates={rates} onRemove={removeEntry} onUpdate={updateEntry} recentLocations={recentLocations} />
-                  </div>
-                </Panel>
-                
-                <PanelResizeHandle className="w-2 group relative transition-all active:w-3">
-                  <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
-                </PanelResizeHandle>
-                
-                <Panel id="capture-pane" order={2} defaultSize={40} minSize={30}>
-                  <div className="h-full px-10 overflow-y-auto space-y-8 custom-scrollbar">
-                    <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                      <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Session Capture</h3>
-                    </div>
-                    <div className="bg-carbon/40 rounded-3xl p-8 border border-border shadow-2xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16 rounded-full" aria-hidden />
-                      <EntryForm
-                        onSubmit={addEntry}
-                        existingEntries={entries}
-                        recentLocations={recentLocations}
-                        defaultShootingOT={!!rates.shootingOTDefault}
-                        defaultShootingOTMinutes={rates.shootingOTMinutes}
-                        basicHours={rates.basicHours}
-                      />
-                    </div>
-                  </div>
-                </Panel>
-              </>
-            ) : (
-              <Panel id="content-pane" order={1} defaultSize={70} minSize={40}>
-                <div className="h-full pr-8 overflow-y-auto custom-scrollbar">
-                  {view === "calendar" ? (
-                    <div className="space-y-8">
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <h2 className="text-lg font-medium text-foreground">Production Calendar</h2>
-                        <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1">
-                          <button type="button" onClick={() => setCalView("week")} aria-pressed={calView === "week"}
-                            className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                              calView === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                            }`}>Week</button>
-                          <button type="button" onClick={() => setCalView("month")} aria-pressed={calView === "month"}
-                            className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
-                              calView === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                            }`}>Month</button>
+            <>
+              {/* Desktop Resizable View */}
+              <div className="hidden md:block h-full">
+                <PanelGroup direction="horizontal" className="h-full" key={view}>
+                  {view === "capture" ? (
+                    <>
+                      <Panel id="log-pane" order={1} defaultSize={30} minSize={20}>
+                        <div className="h-full pr-10 overflow-y-auto space-y-6 custom-scrollbar">
+                          <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
+                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Recent Captured Time</h3>
+                            <span className="text-[10px] font-mono text-muted-foreground bg-carbon px-2 py-0.5 rounded-full border border-border">
+                              {entries.length} {entries.length === 1 ? "DAY" : "DAYS"}
+                            </span>
+                          </div>
+                          <RecentLog entries={entries} rates={rates} onRemove={removeEntry} onUpdate={updateEntry} recentLocations={recentLocations} />
                         </div>
-                      </div>
-                      {calView === "week"
-                        ? <WeekCalendar entries={entries} rates={rates} />
-                        : <MonthCalendar entries={entries} rates={rates} />}
-                    </div>
+                      </Panel>
+                      
+                      <PanelResizeHandle className="w-2 group relative transition-all active:w-3">
+                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
+                      </PanelResizeHandle>
+                      
+                      <Panel id="capture-pane" order={2} defaultSize={40} minSize={30}>
+                        <div className="h-full px-10 overflow-y-auto space-y-8 custom-scrollbar">
+                          <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
+                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Session Capture</h3>
+                          </div>
+                          <div className="bg-carbon/40 rounded-3xl p-8 border border-border shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16 rounded-full" aria-hidden />
+                            <EntryForm
+                              onSubmit={addEntry}
+                              existingEntries={entries}
+                              recentLocations={recentLocations}
+                              defaultShootingOT={!!rates.shootingOTDefault}
+                              defaultShootingOTMinutes={rates.shootingOTMinutes}
+                              basicHours={rates.basicHours}
+                            />
+                          </div>
+                        </div>
+                      </Panel>
+                    </>
                   ) : (
+                    <Panel id="content-pane" order={1} defaultSize={70} minSize={40}>
+                      <div className="h-full pr-8 overflow-y-auto custom-scrollbar">
+                        {view === "calendar" ? (
+                          <div className="space-y-8">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <h2 className="text-lg font-medium text-foreground">Production Calendar</h2>
+                              <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1">
+                                <button type="button" onClick={() => setCalView("week")} aria-pressed={calView === "week"}
+                                  className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
+                                    calView === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                                  }`}>Week</button>
+                                <button type="button" onClick={() => setCalView("month")} aria-pressed={calView === "month"}
+                                  className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-colors ${
+                                    calView === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                                  }`}>Month</button>
+                              </div>
+                            </div>
+                            {calView === "week"
+                              ? <WeekCalendar entries={entries} rates={rates} />
+                              : <MonthCalendar entries={entries} rates={rates} />}
+                          </div>
+                        ) : (
+                          <Invoice entries={entries} rates={rates} projectName={project} />
+                        )}
+                      </div>
+                    </Panel>
+                  )}
+
+                  <PanelResizeHandle className="w-2 group relative transition-all active:w-3">
+                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
+                  </PanelResizeHandle>
+
+                  <Panel id="side-pane" order={3} defaultSize={30} minSize={25}>
+                    <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar">
+                      <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
+                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                          {showRates ? "Project Settings" : "Production Summary"}
+                        </h3>
+                      </div>
+                      {showRates ? (
+                        <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} />
+                      ) : (
+                        <Summary entries={entries} rates={rates} project={project} />
+                      )}
+                    </div>
+                  </Panel>
+                </PanelGroup>
+              </div>
+
+              {/* Mobile Scrolling View */}
+              <div className="md:hidden flex flex-col space-y-12">
+                {view === "capture" && (
+                  <>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Session Capture</h3>
+                      </div>
+                      <div className="bg-carbon/40 rounded-3xl p-6 border border-border shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-2xl -mr-12 -mt-12 rounded-full" aria-hidden />
+                        <EntryForm
+                          onSubmit={addEntry}
+                          existingEntries={entries}
+                          recentLocations={recentLocations}
+                          defaultShootingOT={!!rates.shootingOTDefault}
+                          defaultShootingOTMinutes={rates.shootingOTMinutes}
+                          basicHours={rates.basicHours}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Recent History</h3>
+                        <span className="text-[10px] font-mono text-muted-foreground bg-carbon px-2 py-0.5 rounded-full border border-border">
+                          {entries.length} {entries.length === 1 ? "DAY" : "DAYS"}
+                        </span>
+                      </div>
+                      <RecentLog entries={entries} rates={rates} onRemove={removeEntry} onUpdate={updateEntry} recentLocations={recentLocations} />
+                    </div>
+                  </>
+                )}
+
+                {view === "calendar" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-lg font-medium text-foreground">Calendar</h2>
+                      <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1">
+                        <button type="button" onClick={() => setCalView("week")} className={`px-2 py-1 rounded text-[9px] font-semibold uppercase tracking-widest ${calView === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Wk</button>
+                        <button type="button" onClick={() => setCalView("month")} className={`px-2 py-1 rounded text-[9px] font-semibold uppercase tracking-widest ${calView === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Mo</button>
+                      </div>
+                    </div>
+                    {calView === "week" ? <WeekCalendar entries={entries} rates={rates} /> : <MonthCalendar entries={entries} rates={rates} />}
+                  </div>
+                )}
+
+                {view === "invoice" && (
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-medium text-foreground">Invoice Report</h2>
                     <Invoice entries={entries} rates={rates} projectName={project} />
+                  </div>
+                )}
+
+                {/* Always show summary on mobile at bottom of view unless rates is open */}
+                <div className="space-y-4 pb-12">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
+                      {showRates ? "Project Settings" : "Performance Summary"}
+                    </h3>
+                  </div>
+                  {showRates ? (
+                    <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} />
+                  ) : (
+                    <Summary entries={entries} rates={rates} project={project} />
                   )}
                 </div>
-              </Panel>
-            )}
-
-            <PanelResizeHandle className="w-2 group relative transition-all active:w-3">
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
-            </PanelResizeHandle>
-
-            <Panel id="side-pane" order={3} defaultSize={30} minSize={25}>
-              <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar">
-                <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                  <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                    {showRates ? "Project Settings" : "Production Summary"}
-                  </h3>
-                </div>
-                {showRates ? (
-                  <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} />
-                ) : (
-                  <Summary entries={entries} rates={rates} project={project} />
-                )}
               </div>
-            </Panel>
-          </PanelGroup>
-        )}
-      </main>
+            </>
+          )}
+        </main>
 
         <footer className="py-12 flex flex-col sm:flex-row justify-between items-center gap-6 text-[11px] font-mono uppercase tracking-[0.3em] text-muted-foreground border-t border-border/80 shrink-0">
           <div className="font-medium">© TimeTrack — {new Date().getFullYear()} UK Crew Hours</div>

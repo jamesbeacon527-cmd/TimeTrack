@@ -78,12 +78,44 @@ function initial(): { projects: Project[]; activeId: string } {
 }
 
 export function useProjects() {
-  const [{ projects, activeId }, setState] = useState(initial);
+  const [state, setState] = useState<{ projects: Project[]; activeId: string; isLoading: boolean }>({
+    projects: [],
+    activeId: "",
+    isLoading: true,
+  });
 
-  useEffect(() => { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); }, [projects]);
-  useEffect(() => { localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeId)); }, [activeId]);
+  useEffect(() => {
+    // Initial load from localStorage
+    const saved = initial();
+    setState({ ...saved, isLoading: false });
+  }, []);
 
-  const active = useMemo(() => projects.find((p) => p.id === activeId) ?? projects[0], [projects, activeId]);
+  const { projects, activeId, isLoading } = state;
+
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+    }
+  }, [projects, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeId));
+    }
+  }, [activeId, isLoading]);
+
+  const active = useMemo(() => {
+    if (isLoading || projects.length === 0) {
+      return {
+        id: "",
+        name: "Loading...",
+        createdAt: new Date().toISOString(),
+        rates: DEFAULT_RATES,
+        entries: [],
+      };
+    }
+    return projects.find((p) => p.id === activeId) ?? projects[0];
+  }, [projects, activeId, isLoading]);
 
   const setActive = (id: string) => setState((s) => ({ ...s, activeId: id }));
 
@@ -95,7 +127,7 @@ export function useProjects() {
       rates: initialRates || DEFAULT_RATES,
       entries: [],
     };
-    setState((s) => ({ projects: [...s.projects, p], activeId: p.id }));
+    setState((s) => ({ ...s, projects: [...s.projects, p], activeId: p.id }));
   };
 
   const renameProject = (id: string, name: string) =>
@@ -112,10 +144,10 @@ export function useProjects() {
           rates: DEFAULT_RATES,
           entries: [],
         };
-        return { projects: [fresh], activeId: fresh.id };
+        return { ...s, projects: [fresh], activeId: fresh.id };
       }
       const newActive = s.activeId === id ? remaining[0].id : s.activeId;
-      return { projects: remaining, activeId: newActive };
+      return { ...s, projects: remaining, activeId: newActive };
     });
 
   const duplicateProject = (id: string) =>
@@ -123,7 +155,7 @@ export function useProjects() {
       const src = s.projects.find((p) => p.id === id);
       if (!src) return s;
       const copy: Project = { ...src, id: crypto.randomUUID(), name: `${src.name} (copy)`, createdAt: new Date().toISOString() };
-      return { projects: [...s.projects, copy], activeId: copy.id };
+      return { ...s, projects: [...s.projects, copy], activeId: copy.id };
     });
 
   // Active-project mutations
@@ -160,6 +192,7 @@ export function useProjects() {
   return {
     projects,
     active,
+    isLoading,
     setActive,
     createProject,
     renameProject,

@@ -18,20 +18,20 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col md:flex-row justify-between gap-8 border-b border-border pb-10">
+      <div className="flex flex-col md:flex-row justify-between gap-6 md:gap-8 border-b border-border pb-8 md:pb-10">
         <div className="space-y-4">
-          <h2 className="text-3xl font-light tracking-tight text-foreground uppercase">
+          <h2 className="text-2xl md:text-3xl font-light tracking-tight text-foreground uppercase">
             Production <span className="font-semibold">{projectName || "Untitled"}</span>
           </h2>
-          <div className="flex flex-col gap-1 text-sm font-mono text-muted-foreground uppercase tracking-widest">
+          <div className="flex flex-col gap-1 text-[10px] md:text-sm font-mono text-muted-foreground uppercase tracking-widest">
             <span>Summary of Worked Hours</span>
             <span>{sorted.length > 0 ? `${sorted[0].date} – ${sorted[sorted.length - 1].date}` : "No entries"}</span>
           </div>
         </div>
-        <div className="bg-carbon/50 border border-border rounded-2xl p-6 min-w-[12rem] flex flex-col justify-center items-end text-right">
+        <div className="bg-carbon/50 border border-border rounded-2xl p-4 md:p-6 min-w-[12rem] flex flex-col justify-center items-stretch md:items-end text-center md:text-right">
           <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em] mb-1">Total Due</span>
-          <span className="text-4xl font-light text-volt tabular-nums">{fmtGBP(summary.grand)}</span>
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-2">Incl. {rates.vatRate * 100}% VAT</span>
+          <span className="text-3xl md:text-4xl font-light text-volt tabular-nums">{fmtGBP(summary.grand)}</span>
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-2 px-2 py-0.5 bg-background/40 rounded-full md:bg-transparent">Incl. {rates.vatRate * 100}% VAT</span>
         </div>
       </div>
 
@@ -39,44 +39,51 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
         {sorted.map((e) => {
           const b = breakdown(e, rates);
           return (
-            <div key={e.id} className="group relative bg-carbon/20 border border-border/40 rounded-2xl p-6 transition-colors hover:bg-carbon/40">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-2 space-y-1">
-                  <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            <div key={e.id} className="group relative bg-carbon/20 border border-border/40 rounded-2xl p-4 md:p-6 transition-colors hover:bg-carbon/40">
+              <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 md:gap-6">
+                <div className="md:col-span-1 lg:col-span-2 space-y-1">
+                  <p className="text-[9px] md:text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
                     {new Date(e.date).toLocaleDateString("en-GB", { weekday: "long" })}
                   </p>
-                  <p className="text-lg font-medium text-foreground font-mono">{e.date}</p>
+                  <p className="text-base md:text-lg font-medium text-foreground font-mono">{e.date}</p>
                 </div>
                 
-                <div className="lg:col-span-10 space-y-4">
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
+                <div className="md:col-span-5 lg:col-span-10 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                      <span className="px-2 py-0.5 rounded text-[9px] md:text-[10px] font-mono uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
                         {DAY_TYPE_LABELS[e.dayType]}
                       </span>
-                      <span className="text-sm text-foreground/80 font-mono">
+                      <span className="text-xs md:text-sm text-foreground/80 font-mono tracking-tight">
                         {e.call} – {e.wrap} 
-                        {e.actualStart && e.actualStart !== e.call && <span className="text-muted-foreground ml-2">Actual Start: {e.actualStart}</span>}
-                        {e.actualWrap && e.actualWrap !== e.wrap && <span className="text-muted-foreground ml-2">Actual Wrap: {e.actualWrap}</span>}
                       </span>
                     </div>
-                    <div className="flex items-center gap-6 text-[11px] font-mono uppercase tracking-widest">
+                    <div className="flex items-center gap-4 md:gap-6 text-[10px] md:text-[11px] font-mono uppercase tracking-widest bg-background/20 px-3 py-1.5 rounded-lg border border-border/10 sm:bg-transparent sm:p-0 sm:border-0 justify-between sm:justify-end">
                        <div className="flex flex-col items-end">
-                         <span className="text-muted-foreground text-[9px]">Worked</span>
-                         <span className="text-foreground">{b.worked.toFixed(2)}h</span>
+                         <span className="text-muted-foreground text-[8px] md:text-[9px]">Hrs</span>
+                         <span className="text-foreground">{b.worked.toFixed(1)}</span>
                        </div>
                        <div className="flex flex-col items-end">
-                         <span className="text-muted-foreground text-[9px]">OT</span>
-                         <span className="text-foreground">{(b.ot15 + b.ot2).toFixed(2)}h</span>
+                         <span className="text-muted-foreground text-[8px] md:text-[9px]">OT</span>
+                         <span className="text-ruby">{(b.ot15 + b.ot2).toFixed(1)}</span>
                        </div>
-                       <div className="flex flex-col items-end">
+                       <div className="flex flex-col items-end min-w-[3.5rem]">
                          <span className="text-primary">{fmtGBP(b.total)}</span>
                        </div>
                     </div>
                   </div>
+
+                  {(e.actualStart || e.actualWrap) && (
+                    <div className="flex gap-4 text-[10px] font-mono text-muted-foreground italic">
+                      {e.actualStart && e.actualStart !== e.call && <span>Start: {e.actualStart}</span>}
+                      {e.actualWrap && e.actualWrap !== e.wrap && <span>Wrap: {e.actualWrap}</span>}
+                    </div>
+                  )}
                   
-                  <div className="bg-obsidian/40 rounded-xl p-4 border border-border/20">
-                    <DayTimeline entry={e} rates={rates} />
+                  <div className="bg-obsidian/40 rounded-xl p-3 md:p-4 border border-border/20 overflow-x-auto no-scrollbar">
+                    <div className="min-w-[400px] md:min-w-0">
+                      <DayTimeline entry={e} rates={rates} />
+                    </div>
                   </div>
                   
                   {e.notes && (
