@@ -38,11 +38,11 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async () => {
-    setLoading(true);
     try {
       await loginWithGoogle();
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      console.error("Login Error:", err);
+      throw err;
     }
   };
 

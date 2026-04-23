@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useFirebase } from "./FirebaseProvider";
 import { Button } from "./ui/button";
-import { LogIn, LogOut, User as UserIcon, Cloud, CloudOff } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, Cloud, CloudOff, Loader2 } from "lucide-react";
+import { useToast } from "./ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +15,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserMenu() {
   const { user, login, logout, loading } = useFirebase();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { toast } = useToast();
+
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      await login();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not complete Google login.";
+      toast({
+        title: "Sync Failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   if (loading) {
     return <div className="size-8 rounded-full bg-carbon animate-pulse" />;
@@ -23,11 +43,16 @@ export function UserMenu() {
       <Button 
         variant="outlineGlass" 
         size="sm" 
-        onClick={login}
-        className="text-[10px] uppercase tracking-widest gap-2"
+        onClick={handleLogin}
+        disabled={isLoggingIn}
+        className="text-[10px] md:text-xs uppercase tracking-widest gap-2 h-8"
       >
-        <LogIn className="size-3" />
-        Sync Across Devices
+        {isLoggingIn ? (
+          <Loader2 className="size-3 animate-spin" />
+        ) : (
+          <LogIn className="size-3" />
+        )}
+        {isLoggingIn ? "Connecting..." : "Sync Devices"}
       </Button>
     );
   }
