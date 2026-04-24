@@ -117,7 +117,17 @@ export function useProjects() {
     setState(s => ({ ...s, isLoading: true }));
     
     const projectsRef = collection(db, "users", user.uid, "projects");
-    const unsub = onSnapshot(projectsRef, async (snapshot) => {
+    const unsub = onSnapshot(projectsRef, { includeMetadataChanges: true }, async (snapshot) => {
+      // Avoid overwriting state with older server data if we have pending local writes
+      if (snapshot.metadata.hasPendingWrites) {
+        setSyncing(true);
+        return;
+      }
+
+      // If we are currently in middle of an operation, don't let snapshot revert us
+      // but ensure we update syncing status
+      setSyncing(false);
+
       isSyncingFromCloud.current = true;
       const projects: Project[] = [];
       

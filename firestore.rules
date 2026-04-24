@@ -33,11 +33,12 @@ service cloud.firestore {
 
     // Project Validation
     function isValidProject(data) {
-      return data.keys().hasAll(['id', 'name', 'createdAt', 'rates'])
-          && data.id is string && data.id.size() <= 256
-          && data.name is string && data.name.size() <= 256
-          && data.createdAt is string
-          && data.rates is map;
+      return data.id is string && data.id.size() <= 256
+          && data.name is string && data.name.size() <= 256;
+    }
+
+    function isValidEntry(data) {
+      return data.id is string && data.date is string && data.dayType is string;
     }
 
     match /users/{userId}/projects/{projectId} {
@@ -49,19 +50,8 @@ service cloud.firestore {
                      && incoming().id == existing().id;
       allow delete: if isOwner(userId) && isValidId(projectId);
 
-      // Entry Validation
-      function isValidEntry(data) {
-        let required = data.keys().hasAll(['id', 'date', 'dayType', 'call', 'wrap']);
-        let types = data.id is string && data.date is string && data.dayType is string 
-                   && data.call is string && data.wrap is string;
-        let sizes = data.id.size() <= 128 && data.date.size() <= 10;
-        
-        // Optional location
-        let locationValid = !data.keys().contains('location') || (data.location is string && data.location.size() <= 256);
-        
-        return required && types && sizes && locationValid;
-      }
-
+      // Entry Validation is handled by global isValidEntry(data)
+  
       match /entries/{entryId} {
         allow list: if isOwner(userId);
         allow get: if isOwner(userId) && isValidId(entryId);

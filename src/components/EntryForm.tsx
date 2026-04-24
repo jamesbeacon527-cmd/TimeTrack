@@ -44,9 +44,20 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const [date, setDate] = useState(today());
   const [dayType, setDayType] = useState<DayType>("shoot");
   const [location, setLocation] = useState("");
-  const [call, setCall] = useState("07:30");
+  const [call, setCall] = useState(() => {
+    if (existingEntries.length > 0) {
+      const latest = [...existingEntries].sort((a, b) => b.date.localeCompare(a.date))[0];
+      return latest.call || "08:00";
+    }
+    return "08:00";
+  });
   const [actualStart, setActualStart] = useState("");
-  const [wrap, setWrap] = useState(() => addHoursToTime("07:30", basicHours));
+  const [wrap, setWrap] = useState(() => {
+    const initialCall = (existingEntries.length > 0 
+      ? [...existingEntries].sort((a, b) => b.date.localeCompare(a.date))[0].call 
+      : "08:00") || "08:00";
+    return addHoursToTime(initialCall, basicHours);
+  });
   const [actualWrap, setActualWrap] = useState("");
 
   // When the call time changes, auto-shift wrap to call + basicHours so the
@@ -199,12 +210,12 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       {!isRest && !isTravel && (
         <>
           <Field label="Call Time">
-            <input value={call} onChange={(e) => handleCallChange(e.target.value)} placeholder="07:30"
+            <input value={call} onChange={(e) => handleCallChange(e.target.value)} placeholder="08:00"
               className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
-            <input value={actualStart} onChange={(e) => setActualStart(formatTimeInput(e.target.value))} placeholder="06:45"
+            <input value={actualStart} onChange={(e) => setActualStart(formatTimeInput(e.target.value))} placeholder="08:00"
               className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
           </Field>
@@ -278,7 +289,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
         </Button>
         <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
-          onClick={() => { setLocation(""); setCall("07:30"); setActualStart(""); setWrap(addHoursToTime("07:30", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
+          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
           Reset Form
         </Button>
       </div>

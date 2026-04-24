@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useFirebase } from "./FirebaseProvider";
 import { useProjects } from "@/hooks/useProjects";
 import { Button } from "./ui/button";
-import { LogIn, LogOut, User as UserIcon, Cloud, CloudOff, Loader2, RefreshCw } from "lucide-react";
+import { LogIn, LogOut, Loader2, Cloud } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import {
   DropdownMenu,
@@ -73,10 +73,15 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      {user && isSyncing && (
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-volt/10 text-volt border border-volt/20">
-          <RefreshCw className="size-3 animate-spin" />
-          <span className="text-[10px] uppercase tracking-widest font-medium hidden sm:inline">Syncing</span>
+      {user && (
+        <div className={`px-2 py-1 rounded-md border transition-colors ${
+          isSyncing 
+            ? "bg-volt/10 text-volt border-volt/20" 
+            : "bg-primary/10 text-primary border-primary/20"
+        }`}>
+          <span className="text-[10px] uppercase tracking-widest font-medium">
+            {isSyncing ? "Syncing..." : "Synced"}
+          </span>
         </div>
       )}
       <DropdownMenu>
@@ -97,8 +102,7 @@ export function UserMenu() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="gap-2 text-xs uppercase tracking-widest text-primary hover:bg-transparent cursor-default">
-            <Cloud className="size-3" />
-            Cloud Sync Active
+            Account Connected
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="gap-2 text-xs uppercase tracking-widest text-ruby">
