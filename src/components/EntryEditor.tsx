@@ -109,22 +109,26 @@ export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLo
       return;
     }
 
-    onSave({ 
+    const patch: Partial<DayEntry> = { 
       date, 
       dayType, 
       location: location.trim(), 
       call, 
-      actualStart: actualStart || undefined, 
       wrap, 
-      actualWrap: actualWrap || undefined, 
       mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
       travelMinutes: Math.max(0, travelMinutes), 
       isNight, 
       perDiem, 
       shootingOT, 
-      shootingOTMinutes: shootingOT ? Math.max(0, shootingOTMinutes) : undefined, 
       consecutiveDay 
-    });
+    };
+    if (actualStart) patch.actualStart = actualStart;
+    else patch.actualStart = "";
+    if (actualWrap) patch.actualWrap = actualWrap;
+    else patch.actualWrap = "";
+    if (shootingOT) patch.shootingOTMinutes = Math.max(0, shootingOTMinutes);
+
+    onSave(patch);
     
     toast({ title: "Changes Saved", description: `Time for ${date} updated.` });
   };

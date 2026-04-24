@@ -46,7 +46,6 @@ service cloud.firestore {
       allow get: if isOwner(userId) && isValidId(projectId);
       allow create: if isOwner(userId) && isValidId(projectId) && isValidProject(incoming());
       allow update: if isOwner(userId) && isValidId(projectId) && isValidProject(incoming())
-                     && incoming().createdAt == existing().createdAt
                      && incoming().id == existing().id;
       allow delete: if isOwner(userId) && isValidId(projectId);
 

@@ -191,7 +191,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const entSnap = await getDocs(collection(db, "users", user.uid, "projects", pDoc.id, "entries"));
             if (!entSnap.empty) {
               entries = entSnap.docs.map(d => d.data() as DayEntry);
-            } else if (existing && existing.entries.length > 0 && s.isSyncing) {
+            } else if (existing && existing.entries.length > 0 && syncLock.current > 0) {
               // If server says empty but we are in-flight and had entries, stay safe
               entries = existing.entries;
             }

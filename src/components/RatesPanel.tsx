@@ -71,7 +71,7 @@ export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
             <NumField label="Pre-call ×" value={rates.preCallRate} onChange={(v) => set("preCallRate", v)} step={0.1} />
             <NumField label="Night premium £" value={rates.nightPremium} onChange={(v) => set("nightPremium", v)} />
             <NumField label="Per diem £" value={rates.perDiem} onChange={(v) => set("perDiem", v)} step={1} />
-            <NumField label="VAT rate" value={rates.vatRate} onChange={(v) => set("vatRate", Math.min(1, v))} step={0.01} />
+            <NumField label="VAT rate %" value={rates.vatRate * 100} onChange={(v) => set("vatRate", Math.min(1, v / 100))} step={1} />
             <NumField label="Kit £/day" value={rates.kitRentalPerDay || 0} onChange={(v) => set("kitRentalPerDay", v)} />
           </div>
           <p className="text-[10px] text-muted-foreground font-mono leading-relaxed">

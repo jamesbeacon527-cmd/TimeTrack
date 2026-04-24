@@ -125,24 +125,31 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ 
+      const payload: Omit<DayEntry, "id"> = { 
         date, 
         dayType, 
         location: location.trim(), 
         call, 
-        actualStart: actualStart || undefined, 
         wrap, 
-        actualWrap: actualWrap || undefined, 
         mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
         travelMinutes: Math.max(0, travelMinutes), 
         isNight, 
         perDiem, 
         shootingOT, 
-        shootingOTMinutes: shootingOT ? Math.max(0, shootingOTMinutes) : undefined 
-      });
+      };
+      if (actualStart) payload.actualStart = actualStart;
+      if (actualWrap) payload.actualWrap = actualWrap;
+      if (shootingOT) payload.shootingOTMinutes = Math.max(0, shootingOTMinutes);
+
+      await onSubmit(payload);
       
       toast({ title: "Entry captured", description: `${DAY_TYPE_LABELS[dayType]} · ${date} · ${call}–${wrap}` });
       
+      // Roll date forward to next day
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setDate(nextDay.toISOString().slice(0, 10));
+
       // Reset specific fields after successful capture
       setActualStart("");
       setActualWrap("");
@@ -194,6 +201,15 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           <input 
             value={location} 
             onChange={(e) => setLocation(e.target.value)} 
+            onClick={(e) => {
+              try {
+                if ('showPicker' in e.currentTarget) {
+                  (e.currentTarget as HTMLInputElement).showPicker();
+                }
+              } catch (err) {
+                console.debug("Picker not supported", err);
+              }
+            }}
             maxLength={80}
             list="recent-locations"
             placeholder="Shepperton Studios, Stage 4"
