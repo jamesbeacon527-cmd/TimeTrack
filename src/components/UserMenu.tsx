@@ -22,14 +22,16 @@ export function UserMenu() {
     setIsLoggingIn(true);
     try {
       await login();
-    } catch (err: any) {
+    } catch (err: unknown) {
       let message = "Could not complete Google login.";
-      if (err.code === "auth/unauthorized-domain") {
-        message = "This domain is not authorized in your Firebase console. Please add your Vercel URL to Authentication > Settings > Authorized Domains.";
-      } else if (err.code === "auth/popup-closed-by-user") {
-        message = "Login was cancelled. Please keep the window open to sync.";
-      } else if (err.message) {
-        message = err.message;
+      const error = err as { code?: string; message?: string };
+      
+      if (error.code === "auth/unauthorized-domain") {
+        message = "Domain not authorized. Please add your Vercel URL to 'Authentication > Settings > Authorized domains' in the Firebase Console.";
+      } else if (error.code === "auth/popup-closed-by-user") {
+        message = "Login window was closed before completion.";
+      } else if (error.message) {
+        message = error.message;
       }
       
       toast({

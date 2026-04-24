@@ -217,12 +217,24 @@ export function useProjects() {
       entries: [],
     };
     setState((s) => ({ ...s, projects: [...s.projects, p], activeId: p.id }));
-    if (user) await cloudSaveProject(user.uid, p);
+    if (user) {
+      try {
+        await cloudSaveProject(user.uid, p);
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${p.id}`);
+      }
+    }
   };
 
   const renameProject = async (id: string, name: string) => {
     setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === id ? { ...p, name } : p) }));
-    if (user) await setDoc(doc(db, "users", user.uid, "projects", id), { name }, { merge: true });
+    if (user) {
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", id), { name }, { merge: true });
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
+      }
+    }
   };
 
   const deleteProject = async (id: string) => {
@@ -231,7 +243,13 @@ export function useProjects() {
       const newActive = s.activeId === id ? (remaining[0]?.id || "") : s.activeId;
       return { ...s, projects: remaining, activeId: newActive };
     });
-    if (user) await cloudDeleteProject(user.uid, id);
+    if (user) {
+      try {
+        await cloudDeleteProject(user.uid, id);
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${id}`);
+      }
+    }
   };
 
   const duplicateProject = async (id: string) => {
@@ -239,13 +257,25 @@ export function useProjects() {
     if (!src) return;
     const copy: Project = { ...src, id: crypto.randomUUID(), name: `${src.name} (copy)`, createdAt: new Date().toISOString() };
     setState((s) => ({ ...s, projects: [...s.projects, copy], activeId: copy.id }));
-    if (user) await cloudSaveProject(user.uid, copy);
+    if (user) {
+      try {
+        await cloudSaveProject(user.uid, copy);
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${copy.id}`);
+      }
+    }
   };
 
   // Active-project mutations
   const setRates = async (rates: RateConfig) => {
     setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === s.activeId ? { ...p, rates } : p) }));
-    if (user && activeId) await setDoc(doc(db, "users", user.uid, "projects", activeId), { rates }, { merge: true });
+    if (user && activeId) {
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", activeId), { rates }, { merge: true });
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}`);
+      }
+    }
   };
 
   const addEntry = async (e: Omit<DayEntry, "id">) => {
@@ -257,7 +287,11 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
-      await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", newEntry.id), newEntry);
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", newEntry.id), newEntry);
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${activeId}/entries/${newEntry.id}`);
+      }
     }
   };
 
@@ -269,7 +303,11 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
-      await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id), patch, { merge: true });
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id), patch, { merge: true });
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}/entries/${id}`);
+      }
     }
   };
 
@@ -281,7 +319,11 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
-      await deleteDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id));
+      try {
+        await deleteDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id));
+      } catch (err: unknown) {
+        if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${activeId}/entries/${id}`);
+      }
     }
   };
 

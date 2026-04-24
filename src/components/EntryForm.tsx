@@ -40,6 +40,7 @@ const formatTimeInput = (val: string): string => {
 };
 
 export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = [], defaultShootingOT = false, defaultShootingOTMinutes = 60, basicHours = 10 }: Props) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState(today());
   const [dayType, setDayType] = useState<DayType>("shoot");
   const [location, setLocation] = useState("");
@@ -62,8 +63,9 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const [shootingOT, setShootingOT] = useState(defaultShootingOT);
   const [shootingOTMinutes, setShootingOTMinutes] = useState<number>(defaultShootingOTMinutes);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     // Prevent duplicate entries for the same day
     if (existingEntries.some(ent => ent.date === date)) {
@@ -110,23 +112,38 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       return;
     }
 
-    onSubmit({ 
-      date, 
-      dayType, 
-      location: location.trim(), 
-      call, 
-      actualStart: actualStart || undefined, 
-      wrap, 
-      actualWrap: actualWrap || undefined, 
-      mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
-      travelMinutes: Math.max(0, travelMinutes), 
-      isNight, 
-      perDiem, 
-      shootingOT, 
-      shootingOTMinutes: shootingOT ? Math.max(0, shootingOTMinutes) : undefined 
-    });
-    
-    toast({ title: "Entry captured", description: `${DAY_TYPE_LABELS[dayType]} · ${date} · ${call}–${wrap}` });
+    setIsSubmitting(true);
+    try {
+      await onSubmit({ 
+        date, 
+        dayType, 
+        location: location.trim(), 
+        call, 
+        actualStart: actualStart || undefined, 
+        wrap, 
+        actualWrap: actualWrap || undefined, 
+        mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
+        travelMinutes: Math.max(0, travelMinutes), 
+        isNight, 
+        perDiem, 
+        shootingOT, 
+        shootingOTMinutes: shootingOT ? Math.max(0, shootingOTMinutes) : undefined 
+      });
+      
+      toast({ title: "Entry captured", description: `${DAY_TYPE_LABELS[dayType]} · ${date} · ${call}–${wrap}` });
+      
+      // Reset specific fields after successful capture
+      setActualStart("");
+      setActualWrap("");
+      setNight(false);
+      setPerDiem(false);
+      setShootingOT(defaultShootingOT);
+      setShootingOTMinutes(defaultShootingOTMinutes);
+    } catch (err) {
+      // Hook handles logging/toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isRest = dayType === "rest";
@@ -257,8 +274,10 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       </div>
 
       <div className="md:col-span-2 flex flex-col md:flex-row gap-3 pt-2">
-        <Button type="submit" variant="volt" className="flex-[2] h-12 md:h-14 text-[10px] md:text-sm uppercase tracking-widest">CAPTURE ENTRY</Button>
-        <Button type="reset" variant="outlineGlass" className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
+        <Button type="submit" variant="volt" disabled={isSubmitting} className="flex-[2] h-12 md:h-14 text-[10px] md:text-sm uppercase tracking-widest">
+          {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
+        </Button>
+        <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
           onClick={() => { setLocation(""); setCall("07:30"); setActualStart(""); setWrap(addHoursToTime("07:30", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
           Reset Form
         </Button>
