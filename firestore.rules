@@ -51,11 +51,15 @@ service cloud.firestore {
 
       // Entry Validation
       function isValidEntry(data) {
-        let required = data.keys().hasAll(['id', 'date', 'dayType', 'call', 'wrap', 'location']);
+        let required = data.keys().hasAll(['id', 'date', 'dayType', 'call', 'wrap']);
         let types = data.id is string && data.date is string && data.dayType is string 
-                   && data.call is string && data.wrap is string && data.location is string;
-        let sizes = data.id.size() <= 128 && data.date.size() <= 10 && data.location.size() <= 256;
-        return required && types && sizes;
+                   && data.call is string && data.wrap is string;
+        let sizes = data.id.size() <= 128 && data.date.size() <= 10;
+        
+        // Optional location
+        let locationValid = !data.keys().contains('location') || (data.location is string && data.location.size() <= 256);
+        
+        return required && types && sizes && locationValid;
       }
 
       match /entries/{entryId} {

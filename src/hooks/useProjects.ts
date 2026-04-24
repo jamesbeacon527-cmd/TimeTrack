@@ -94,66 +94,78 @@ function initial(): { projects: Project[]; activeId: string } {
 
 export function useProjects() {
   const { user } = useFirebase();
-  const [state, setState] = useState<{ projects: Project[]; activeId: string; isLoading: boolean }>({
+  const [state, setState] = useState<{ projects: Project[]; activeId: string; isLoading: boolean; isSyncing: boolean }>({
     projects: [],
     activeId: "",
     isLoading: true,
+    isSyncing: false,
   });
   
   const isSyncingFromCloud = useRef(false);
 
+  // Background sync tracking
+  const setSyncing = (val: boolean) => setState(s => ({ ...s, isSyncing: val }));
+
   useEffect(() => {
     if (!user) {
       const saved = initial();
-      setState({ ...saved, isLoading: false });
+      setState({ ...saved, isLoading: false, isSyncing: false });
       return;
     }
 
     // Load from Firestore if user is present
     setState(s => ({ ...s, isLoading: true }));
     
-    const projectsQuery = query(collection(db, "users", user.uid, "projects"));
-    const unsub = onSnapshot(projectsQuery, async (snapshot) => {
+    const projectsRef = collection(db, "users", user.uid, "projects");
+    const unsub = onSnapshot(projectsRef, async (snapshot) => {
       isSyncingFromCloud.current = true;
       const projects: Project[] = [];
       
-      for (const pDoc of snapshot.docs) {
+      // Fetch all projects and their entries
+      const projectDocs = snapshot.docs;
+      const projectsWithEntries = await Promise.all(projectDocs.map(async (pDoc) => {
         const pData = pDoc.data() as Omit<Project, "entries">;
         const entriesSnapshot = await getDocs(collection(db, "users", user.uid, "projects", pDoc.id, "entries"));
         const entries = entriesSnapshot.docs.map(d => d.data() as DayEntry);
         
-        projects.push({
+        return {
           ...pData,
           rates: mergeRates(pData.rates),
           entries: entries.sort((a, b) => b.date.localeCompare(a.date))
-        });
-      }
+        };
+      }));
 
-      // If cloud is empty but local has data, offer to upload (or just upload for now)
-      if (projects.length === 0) {
+      // If cloud is empty but local has data, upload local data
+      if (projectsWithEntries.length === 0) {
         const local = initial();
         if (local.projects.length > 0) {
-          for (const lp of local.projects) {
-            await cloudSaveProject(user.uid, lp);
+          setSyncing(true);
+          try {
+            for (const lp of local.projects) {
+              await cloudSaveProject(user.uid, lp);
+            }
+          } finally {
+            setSyncing(false);
           }
-          setState({ ...local, isLoading: false });
+          setState({ ...local, isLoading: false, isSyncing: false });
           return;
         }
       }
 
       setState(s => {
-        const nextActiveId = snapshot.docs.find(d => d.id === s.activeId) ? s.activeId : (projects[0]?.id || "");
-        return { projects, activeId: nextActiveId, isLoading: false };
+        const nextActiveId = snapshot.docs.find(d => d.id === s.activeId) ? s.activeId : (projectsWithEntries[0]?.id || "");
+        return { projects: projectsWithEntries, activeId: nextActiveId, isLoading: false, isSyncing: false };
       });
       isSyncingFromCloud.current = false;
     }, (err) => {
       handleFirestoreError(err, 'list', 'projects');
+      setState(s => ({ ...s, isLoading: false }));
     });
 
     return () => unsub();
   }, [user]);
 
-  const { projects, activeId, isLoading } = state;
+  const { projects, activeId, isLoading, isSyncing } = state;
 
   // Persistence to localStorage (as backup/offline cache)
   useEffect(() => {
@@ -218,10 +230,13 @@ export function useProjects() {
     };
     setState((s) => ({ ...s, projects: [...s.projects, p], activeId: p.id }));
     if (user) {
+      setSyncing(true);
       try {
         await cloudSaveProject(user.uid, p);
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${p.id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -229,10 +244,13 @@ export function useProjects() {
   const renameProject = async (id: string, name: string) => {
     setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === id ? { ...p, name } : p) }));
     if (user) {
+      setSyncing(true);
       try {
         await setDoc(doc(db, "users", user.uid, "projects", id), { name }, { merge: true });
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -244,10 +262,13 @@ export function useProjects() {
       return { ...s, projects: remaining, activeId: newActive };
     });
     if (user) {
+      setSyncing(true);
       try {
         await cloudDeleteProject(user.uid, id);
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -258,10 +279,13 @@ export function useProjects() {
     const copy: Project = { ...src, id: crypto.randomUUID(), name: `${src.name} (copy)`, createdAt: new Date().toISOString() };
     setState((s) => ({ ...s, projects: [...s.projects, copy], activeId: copy.id }));
     if (user) {
+      setSyncing(true);
       try {
         await cloudSaveProject(user.uid, copy);
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${copy.id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -270,10 +294,13 @@ export function useProjects() {
   const setRates = async (rates: RateConfig) => {
     setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === s.activeId ? { ...p, rates } : p) }));
     if (user && activeId) {
+      setSyncing(true);
       try {
         await setDoc(doc(db, "users", user.uid, "projects", activeId), { rates }, { merge: true });
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -287,10 +314,13 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
+      setSyncing(true);
       try {
         await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", newEntry.id), newEntry);
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${activeId}/entries/${newEntry.id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -303,10 +333,13 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
+      setSyncing(true);
       try {
         await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id), patch, { merge: true });
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}/entries/${id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -319,10 +352,13 @@ export function useProjects() {
         : p),
     }));
     if (user && activeId) {
+      setSyncing(true);
       try {
         await deleteDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id));
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${activeId}/entries/${id}`);
+      } finally {
+        setSyncing(false);
       }
     }
   };
@@ -331,6 +367,7 @@ export function useProjects() {
     projects,
     active,
     isLoading,
+    isSyncing,
     setActive,
     createProject,
     renameProject,
