@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useFirebase } from "./FirebaseProvider";
 import { useProjects } from "@/hooks/useProjects";
 import { Button } from "./ui/button";
-import { LogIn, LogOut, Loader2, Cloud } from "lucide-react";
+import { LogIn, LogOut, Loader2 } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import {
   DropdownMenu,

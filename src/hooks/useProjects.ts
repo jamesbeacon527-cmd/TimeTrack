@@ -102,9 +102,14 @@ export function useProjects() {
   });
   
   const isSyncingFromCloud = useRef(false);
+  const syncLock = useRef(0);
 
   // Background sync tracking
-  const setSyncing = (val: boolean) => setState(s => ({ ...s, isSyncing: val }));
+  const setSyncing = (val: boolean) => {
+    setState(s => ({ ...s, isSyncing: val }));
+    if (val) syncLock.current++;
+    else syncLock.current = Math.max(0, syncLock.current - 1);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -118,21 +123,40 @@ export function useProjects() {
     
     const projectsRef = collection(db, "users", user.uid, "projects");
     const unsub = onSnapshot(projectsRef, { includeMetadataChanges: true }, async (snapshot) => {
-      // Avoid overwriting state with older server data if we have pending local writes
-      if (snapshot.metadata.hasPendingWrites) {
-        setSyncing(true);
+      // Avoid overwriting state with older server data if we have pending local writes or active sync operations
+      if (snapshot.metadata.hasPendingWrites || syncLock.current > 0) {
+        setState(s => ({ ...s, isSyncing: true }));
         return;
       }
 
-      // If we are currently in middle of an operation, don't let snapshot revert us
-      // but ensure we update syncing status
-      setSyncing(false);
-
-      isSyncingFromCloud.current = true;
-      const projects: Project[] = [];
-      
-      // Fetch all projects and their entries
       const projectDocs = snapshot.docs;
+      
+      // If we are currently signed in but the server returns empty,
+      // it might be because the account is new or data hasn't arrived.
+      // We only want to set state to empty if we've explicitly confirmed it should be.
+      if (projectDocs.length === 0) {
+        setState(s => ({ ...s, isSyncing: false }));
+        const local = initial();
+        if (local.projects.length > 0) {
+          // Upload local to cloud
+          setSyncing(true);
+          try {
+            for (const lp of local.projects) {
+              await cloudSaveProject(user.uid, lp);
+            }
+          } catch (err) {
+            console.error("Sync error:", err);
+          } finally {
+            setSyncing(false);
+          }
+          setState({ ...local, isLoading: false, isSyncing: false });
+          return;
+        }
+      }
+
+      setState(s => ({ ...s, isSyncing: false }));
+      isSyncingFromCloud.current = true;
+      
       const projectsWithEntries = await Promise.all(projectDocs.map(async (pDoc) => {
         const pData = pDoc.data() as Omit<Project, "entries">;
         const entriesSnapshot = await getDocs(collection(db, "users", user.uid, "projects", pDoc.id, "entries"));
@@ -145,31 +169,14 @@ export function useProjects() {
         };
       }));
 
-      // If cloud is empty but local has data, upload local data
-      if (projectsWithEntries.length === 0) {
-        const local = initial();
-        if (local.projects.length > 0) {
-          setSyncing(true);
-          try {
-            for (const lp of local.projects) {
-              await cloudSaveProject(user.uid, lp);
-            }
-          } finally {
-            setSyncing(false);
-          }
-          setState({ ...local, isLoading: false, isSyncing: false });
-          return;
-        }
-      }
-
       setState(s => {
         const nextActiveId = snapshot.docs.find(d => d.id === s.activeId) ? s.activeId : (projectsWithEntries[0]?.id || "");
         return { projects: projectsWithEntries, activeId: nextActiveId, isLoading: false, isSyncing: false };
       });
       isSyncingFromCloud.current = false;
     }, (err) => {
-      handleFirestoreError(err, 'list', 'projects');
-      setState(s => ({ ...s, isLoading: false }));
+      console.error("Snapshot error:", err);
+      setState(s => ({ ...s, isLoading: false, isSyncing: false }));
     });
 
     return () => unsub();
