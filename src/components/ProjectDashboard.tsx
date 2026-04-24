@@ -62,12 +62,13 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
                   <DropdownMenuContent align="end" className="w-48 bg-obsidian border-border z-[100]">
                     <DropdownMenuItem 
                       className="cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        // Delay prompt slightly to ensure menu closes or doesn't interfere
+                      onSelect={() => {
+                        const currentName = p.name;
+                        const projectId = p.id;
+                        // Use a short delay so the menu closes before the prompt blocks the thread
                         setTimeout(() => {
-                          const name = prompt("Rename production:", p.name);
-                          if (name !== null && name.trim()) onRename(p.id, name.trim());
+                          const name = prompt("Rename production:", currentName);
+                          if (name !== null && name.trim()) onRename(projectId, name.trim());
                         }, 100);
                       }}
                     >
@@ -82,10 +83,11 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
                     <div className="h-px bg-border my-1" />
                     <DropdownMenuItem 
                       className="text-ruby focus:text-ruby cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
+                      onSelect={() => {
+                        const currentName = p.name;
+                        const projectId = p.id;
                         setTimeout(() => {
-                          if (confirm(`Delete "${p.name}"? This cannot be undone.`)) onDelete(p.id);
+                          if (confirm(`Delete "${currentName}"? This cannot be undone.`)) onDelete(projectId);
                         }, 100);
                       }}
                     >

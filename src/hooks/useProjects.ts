@@ -103,6 +103,7 @@ export function useProjects() {
   
   const isSyncingFromCloud = useRef(false);
   const syncLock = useRef(0);
+  const projectsRefState = useRef<Project[]>([]);
 
   // Background sync tracking
   const setSyncing = (val: boolean) => {
@@ -110,6 +111,12 @@ export function useProjects() {
     if (val) syncLock.current++;
     else syncLock.current = Math.max(0, syncLock.current - 1);
   };
+
+  useEffect(() => {
+    projectsRefState.current = state.projects;
+  }, [state.projects]);
+
+  const { projects, activeId, isLoading, isSyncing } = state;
 
   useEffect(() => {
     if (!user) {
@@ -122,7 +129,7 @@ export function useProjects() {
     setState(s => ({ ...s, isLoading: true }));
     
     const projectsRef = collection(db, "users", user.uid, "projects");
-    const unsub = onSnapshot(projectsRef, { includeMetadataChanges: true }, async (snapshot) => {
+    const unsub = onSnapshot(projectsRef, async (snapshot) => {
       // Avoid overwriting state with older server data if we have pending local writes or active sync operations
       if (snapshot.metadata.hasPendingWrites || syncLock.current > 0) {
         setState(s => ({ ...s, isSyncing: true }));
@@ -131,49 +138,69 @@ export function useProjects() {
 
       const projectDocs = snapshot.docs;
       
-      // If we are currently signed in but the server returns empty,
-      // it might be because the account is new or data hasn't arrived.
-      // We only want to set state to empty if we've explicitly confirmed it should be.
       if (projectDocs.length === 0) {
-        setState(s => ({ ...s, isSyncing: false }));
+        setState(s => ({ ...s, isSyncing: false, isLoading: false }));
         const local = initial();
         if (local.projects.length > 0) {
-          // Upload local to cloud
           setSyncing(true);
           try {
-            for (const lp of local.projects) {
-              await cloudSaveProject(user.uid, lp);
-            }
+            for (const lp of local.projects) await cloudSaveProject(user.uid, lp);
           } catch (err) {
-            console.error("Sync error:", err);
+            console.error("Migration error:", err);
           } finally {
             setSyncing(false);
           }
-          setState({ ...local, isLoading: false, isSyncing: false });
           return;
         }
+        return;
       }
 
-      setState(s => ({ ...s, isSyncing: false }));
+      // Flag that we are starting a cloud sync to avoid localStorage feedback loops
       isSyncingFromCloud.current = true;
       
-      const projectsWithEntries = await Promise.all(projectDocs.map(async (pDoc) => {
-        const pData = pDoc.data() as Omit<Project, "entries">;
-        const entriesSnapshot = await getDocs(collection(db, "users", user.uid, "projects", pDoc.id, "entries"));
-        const entries = entriesSnapshot.docs.map(d => d.data() as DayEntry);
-        
-        return {
-          ...pData,
-          rates: mergeRates(pData.rates),
-          entries: entries.sort((a, b) => b.date.localeCompare(a.date))
-        };
-      }));
+      try {
+        const projectsWithEntries = await Promise.all(projectDocs.map(async (pDoc) => {
+          const pData = pDoc.data() as Omit<Project, "entries">;
+          let entries: DayEntry[] = [];
+          try {
+            const entriesSnapshot = await getDocs(collection(db, "users", user.uid, "projects", pDoc.id, "entries"));
+            entries = entriesSnapshot.docs.map(d => d.data() as DayEntry);
+          } catch (e) {
+            console.warn("Could not fetch entries for project", pDoc.id, e);
+            const existing = projectsRefState.current.find(p => p.id === pDoc.id);
+            if (existing) entries = existing.entries;
+          }
+          
+          return {
+            ...pData,
+            rates: mergeRates(pData.rates),
+            entries: entries.sort((a, b) => b.date.localeCompare(a.date))
+          };
+        }));
 
-      setState(s => {
-        const nextActiveId = snapshot.docs.find(d => d.id === s.activeId) ? s.activeId : (projectsWithEntries[0]?.id || "");
-        return { projects: projectsWithEntries, activeId: nextActiveId, isLoading: false, isSyncing: false };
-      });
-      isSyncingFromCloud.current = false;
+        setState(s => {
+          const merged = projectsWithEntries.map(cp => {
+            const lp = s.projects.find(p => p.id === cp.id);
+            if (cp.entries.length === 0 && lp && lp.entries.length > 0 && s.isSyncing) {
+              return { ...cp, entries: lp.entries };
+            }
+            return cp;
+          });
+
+          const nextActiveId = snapshot.docs.find(d => d.id === s.activeId) ? s.activeId : (merged[0]?.id || "");
+          return { 
+            projects: merged, 
+            activeId: nextActiveId, 
+            isLoading: false, 
+            isSyncing: false 
+          };
+        });
+      } finally {
+        // Delay resetting the flag slightly to allow useEffects to catch the "just synced" state
+        setTimeout(() => {
+          isSyncingFromCloud.current = false;
+        }, 500);
+      }
     }, (err) => {
       console.error("Snapshot error:", err);
       setState(s => ({ ...s, isLoading: false, isSyncing: false }));
@@ -181,8 +208,6 @@ export function useProjects() {
 
     return () => unsub();
   }, [user]);
-
-  const { projects, activeId, isLoading, isSyncing } = state;
 
   // Persistence to localStorage (as backup/offline cache)
   useEffect(() => {
@@ -259,12 +284,14 @@ export function useProjects() {
   };
 
   const renameProject = async (id: string, name: string) => {
-    setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === id ? { ...p, name } : p) }));
+    if (!name.trim()) return;
+    setState((s) => ({ ...s, projects: s.projects.map((p) => p.id === id ? { ...p, name: name.trim() } : p) }));
     if (user) {
       setSyncing(true);
       try {
-        await setDoc(doc(db, "users", user.uid, "projects", id), { name }, { merge: true });
+        await setDoc(doc(db, "users", user.uid, "projects", id), { name: name.trim() }, { merge: true });
       } catch (err: unknown) {
+        console.error("Rename error:", err);
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
       } finally {
         setSyncing(false);
@@ -283,6 +310,7 @@ export function useProjects() {
       try {
         await cloudDeleteProject(user.uid, id);
       } catch (err: unknown) {
+        console.error("Delete error:", err);
         if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${id}`);
       } finally {
         setSyncing(false);

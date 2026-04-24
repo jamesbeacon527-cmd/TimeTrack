@@ -69,10 +69,13 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
           return (
             <DropdownMenuItem
               key={p.id}
-              onSelect={(e) => { e.preventDefault(); onSelect(p.id); setOpen(false); }}
-              className="flex items-center justify-between gap-2 cursor-pointer"
+              className="flex items-center justify-between gap-2 cursor-pointer group/item"
+              onSelect={() => {
+                if (!open) return; // Guard against accidental triggers
+                onSelect(p.id);
+              }}
             >
-              <span className="flex items-center gap-2 min-w-0">
+              <span className="flex items-center gap-2 min-w-0 pointer-events-none">
                 <Check className={`size-3.5 ${isActive ? "text-primary" : "opacity-0"}`} />
                 <span className="truncate">
                   <span className="block text-sm text-foreground truncate">{p.name}</span>
@@ -81,18 +84,36 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
               </span>
               <span className="flex items-center gap-1 shrink-0">
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleRename(p); }}
-                  className="p-1 rounded hover:bg-secondary/60 text-muted-foreground hover:text-foreground"
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { 
+                    e.preventDefault();
+                    e.stopPropagation(); 
+                    handleRename(p); 
+                  }}
+                  className="p-1 rounded hover:bg-secondary/80 text-muted-foreground hover:text-foreground relative z-50"
                   aria-label="Rename project"
                 ><Pencil className="size-3" /></button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onDuplicate(p.id); }}
-                  className="p-1 rounded hover:bg-secondary/60 text-muted-foreground hover:text-foreground"
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { 
+                    e.preventDefault();
+                    e.stopPropagation(); 
+                    onDuplicate(p.id); 
+                  }}
+                  className="p-1 rounded hover:bg-secondary/80 text-muted-foreground hover:text-foreground relative z-50"
                   aria-label="Duplicate project"
                 ><Copy className="size-3" /></button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
-                  className="p-1 rounded hover:bg-secondary/60 text-muted-foreground hover:text-ruby"
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { 
+                    e.preventDefault();
+                    e.stopPropagation(); 
+                    handleDelete(p); 
+                  }}
+                  className="p-1 rounded hover:bg-ruby/20 text-muted-foreground hover:text-ruby relative z-50"
                   aria-label="Delete project"
                 ><Trash2 className="size-3" /></button>
               </span>
