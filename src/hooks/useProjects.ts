@@ -128,6 +128,9 @@ export function useProjects() {
     // Load from Firestore if user is present
     setState(s => ({ ...s, isLoading: true }));
     
+    // Track if we've ever successfully loaded from cloud to avoid migration loops
+    let hasLoadedOnce = false;
+
     const projectsRef = collection(db, "users", user.uid, "projects");
     const unsub = onSnapshot(projectsRef, async (snapshot) => {
       // Avoid overwriting state with older server data if we have pending local writes or active sync operations
@@ -138,10 +141,12 @@ export function useProjects() {
 
       const projectDocs = snapshot.docs;
       
-      if (projectDocs.length === 0) {
-        setState(s => ({ ...s, isSyncing: false, isLoading: false }));
+      // Migration logic: Only run if it's the first load and we have local data but no cloud data
+      if (projectDocs.length === 0 && !hasLoadedOnce) {
+        hasLoadedOnce = true;
         const local = initial();
         if (local.projects.length > 0) {
+          console.log("Empty cloud, found local data. Migrating...");
           setSyncing(true);
           try {
             for (const lp of local.projects) await cloudSaveProject(user.uid, lp);
@@ -149,12 +154,15 @@ export function useProjects() {
             console.error("Migration error:", err);
           } finally {
             setSyncing(false);
+            setState(s => ({ ...s, isLoading: false }));
           }
           return;
         }
+        setState(s => ({ ...s, projects: [], activeId: "", isLoading: false, isSyncing: false }));
         return;
       }
 
+      hasLoadedOnce = true;
       // Flag that we are starting a cloud sync to avoid localStorage feedback loops
       isSyncingFromCloud.current = true;
       
@@ -196,7 +204,6 @@ export function useProjects() {
           };
         });
       } finally {
-        // Delay resetting the flag slightly to allow useEffects to catch the "just synced" state
         setTimeout(() => {
           isSyncingFromCloud.current = false;
         }, 500);
@@ -226,7 +233,7 @@ export function useProjects() {
     if (isLoading || projects.length === 0) {
       return {
         id: "",
-        name: "Loading...",
+        name: projects.length === 0 && !isLoading ? "No Project" : "Loading...",
         createdAt: new Date().toISOString(),
         rates: DEFAULT_RATES,
         entries: [],
@@ -249,11 +256,18 @@ export function useProjects() {
     await batch.commit();
   };
 
+  const cloudTouchProject = async (uid: string, pid: string) => {
+    try {
+      await setDoc(doc(db, "users", uid, "projects", pid), {
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.warn("Failed to touch project timestamp:", err);
+    }
+  };
+
   const cloudDeleteProject = async (uid: string, pid: string) => {
     await deleteDoc(doc(db, "users", uid, "projects", pid));
-    // Note: Recursive delete of subcollections is handled by client batch or rules cleanup if needed
-    // For simplicity, we assume entries are clean or we use a cloud function later. 
-    // In small apps, manually deleting entries is fine.
     const entries = await getDocs(collection(db, "users", uid, "projects", pid, "entries"));
     const batch = writeBatch(db);
     entries.forEach(d => batch.delete(d.ref));
@@ -289,7 +303,10 @@ export function useProjects() {
     if (user) {
       setSyncing(true);
       try {
-        await setDoc(doc(db, "users", user.uid, "projects", id), { name: name.trim() }, { merge: true });
+        await setDoc(doc(db, "users", user.uid, "projects", id), { 
+          name: name.trim(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       } catch (err: unknown) {
         console.error("Rename error:", err);
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
@@ -341,7 +358,10 @@ export function useProjects() {
     if (user && activeId) {
       setSyncing(true);
       try {
-        await setDoc(doc(db, "users", user.uid, "projects", activeId), { rates }, { merge: true });
+        await setDoc(doc(db, "users", user.uid, "projects", activeId), { 
+          rates,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}`);
       } finally {
@@ -361,7 +381,10 @@ export function useProjects() {
     if (user && activeId) {
       setSyncing(true);
       try {
-        await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", newEntry.id), newEntry);
+        const batch = writeBatch(db);
+        batch.set(doc(db, "users", user.uid, "projects", activeId, "entries", newEntry.id), newEntry);
+        batch.set(doc(db, "users", user.uid, "projects", activeId), { updatedAt: serverTimestamp() }, { merge: true });
+        await batch.commit();
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'create', `projects/${activeId}/entries/${newEntry.id}`);
       } finally {
@@ -380,7 +403,10 @@ export function useProjects() {
     if (user && activeId) {
       setSyncing(true);
       try {
-        await setDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id), patch, { merge: true });
+        const batch = writeBatch(db);
+        batch.set(doc(db, "users", user.uid, "projects", activeId, "entries", id), patch, { merge: true });
+        batch.set(doc(db, "users", user.uid, "projects", activeId), { updatedAt: serverTimestamp() }, { merge: true });
+        await batch.commit();
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${activeId}/entries/${id}`);
       } finally {
@@ -399,7 +425,10 @@ export function useProjects() {
     if (user && activeId) {
       setSyncing(true);
       try {
-        await deleteDoc(doc(db, "users", user.uid, "projects", activeId, "entries", id));
+        const batch = writeBatch(db);
+        batch.delete(doc(db, "users", user.uid, "projects", activeId, "entries", id));
+        batch.set(doc(db, "users", user.uid, "projects", activeId), { updatedAt: serverTimestamp() }, { merge: true });
+        await batch.commit();
       } catch (err: unknown) {
         if (err instanceof Error) handleFirestoreError(err, 'delete', `projects/${activeId}/entries/${id}`);
       } finally {
