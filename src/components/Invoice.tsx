@@ -65,7 +65,7 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
                        </div>
                        <div className="flex flex-col items-end">
                          <span className="text-muted-foreground text-[8px] md:text-[9px]">OT</span>
-                         <span className="text-ruby">{(b.ot15 + b.ot2).toFixed(1)}</span>
+                         <span className="text-ruby">{(b.preCall + b.ot15 + b.ot2).toFixed(1)}</span>
                        </div>
                        <div className="flex flex-col items-end min-w-[3.5rem]">
                          <span className="text-primary">{fmtGBP(b.total)}</span>

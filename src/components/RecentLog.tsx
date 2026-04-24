@@ -58,11 +58,10 @@ export const RecentLog = ({ entries, rates, onRemove, onUpdate, recentLocations 
                     {e.isNight && <span className="text-accent text-[10px]">NIGHT</span>}
                   </p>
                   <p className="text-[11px] uppercase tracking-tight text-muted-foreground font-mono font-medium leading-relaxed mt-0.5">
-                    {e.actualStart && e.actualStart !== e.call ? <span className="text-accent">{e.actualStart}→</span> : ""}
-                    {e.call} — {e.actualWrap && e.actualWrap !== e.wrap ? <span className="text-ruby">{e.actualWrap}</span> : e.wrap}
+                    {e.actualStart && e.actualStart !== e.call ? <span className="text-orange-500">{e.actualStart}→</span> : ""}
+                    {e.call} — {e.actualWrap && e.actualWrap !== e.wrap ? <span className="text-amber">{e.actualWrap}</span> : e.wrap}
                     {" · "}<span className="text-primary font-bold">{fmtHours(b.worked)}h</span>
-                    {b.preCall > 0 && <span className="text-accent font-bold"> · PC</span>}
-                    {b.ot15 > 0 && <span className="text-amber font-bold"> · 1.5×</span>}
+                    {(b.preCall > 0 || b.ot15 > 0) && <span className="text-amber font-bold"> · OT</span>}
                     {b.ot2 > 0 && <span className="text-ruby font-bold"> · 2×</span>}
                     {e.shootingOT && <span className="text-ruby font-bold"> · SOT</span>}
                     {e.perDiem && <span className="text-primary font-bold"> · PD</span>}
@@ -81,11 +80,10 @@ export const RecentLog = ({ entries, rates, onRemove, onUpdate, recentLocations 
                 <DayTimeline entry={e} rates={rates} />
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono uppercase tracking-widest">
-                  <Stat label="Basic" value={fmtGBP(b.basicPay)} tone="primary" />
-                  <Stat label="OT 1.5x" value={fmtGBP(b.ot15Pay)} tone={b.ot15Pay ? "amber" : undefined} />
-                  <Stat label="OT 2x" value={fmtGBP(b.ot2Pay)} tone={b.ot2Pay ? "ruby" : undefined} />
-                  <Stat label="Travel" value={fmtGBP(b.travelPay)} />
-                  {b.preCallPay > 0 && <Stat label="Pre-call" value={fmtGBP(b.preCallPay)} tone="accent" />}
+                  <Stat label={`Basic (${fmtHours(b.basic)}h)`} value={fmtGBP(b.basicPay)} tone="primary" />
+                  {(b.ot15Pay + b.preCallPay > 0) && <Stat label={`Overtime (${fmtHours(b.preCall + b.ot15)}h)`} value={fmtGBP(b.ot15Pay + b.preCallPay)} tone="amber" />}
+                  {b.ot2Pay > 0 && <Stat label={`OT 2× (${fmtHours(b.ot2)}h)`} value={fmtGBP(b.ot2Pay)} tone="ruby" />}
+                  {b.travelPay > 0 && <Stat label={`Travel (${fmtHours(b.travelHours)}h)`} value={fmtGBP(b.travelPay)} />}
                   {b.nightPay > 0 && <Stat label="Night" value={fmtGBP(b.nightPay)} tone="accent" />}
                   {b.perDiemPay > 0 && <Stat label="Per diem" value={fmtGBP(b.perDiemPay)} tone="primary" />}
                   {b.kitRental > 0 && <Stat label="Kit" value={fmtGBP(b.kitRental)} />}
@@ -127,7 +125,7 @@ export const RecentLog = ({ entries, rates, onRemove, onUpdate, recentLocations 
   );
 };
 
-const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" | "accent" | "amber" }) => (
+const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" | "accent" | "amber" | "orange" }) => (
   <div className="bg-obsidian border border-border rounded-md px-3 py-2">
     <div className="text-muted-foreground">{label}</div>
     <div className={`text-sm font-mono tabular-nums normal-case tracking-normal ${
@@ -135,6 +133,7 @@ const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "pr
       tone === "ruby" ? "text-ruby" : 
       tone === "accent" ? "text-accent" :
       tone === "amber" ? "text-amber" :
+      tone === "orange" ? "text-orange-500" :
       "text-foreground"
     }`}>{value}</div>
   </div>

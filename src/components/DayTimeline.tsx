@@ -50,8 +50,8 @@ function buildSegments(entry: DayEntry, rates: RateConfig): { segments: Segment[
 
   const workedBuckets = [
     { name: "Basic", remaining: basicMin, className: "bg-primary/80", swatch: "bg-primary" },
-    { name: "Shooting OT 2×", remaining: ot2Min, className: "bg-ruby/80", swatch: "bg-ruby" },
-    { name: "OT 1.5×", remaining: ot15Min, className: "bg-amber/80", swatch: "bg-amber" },
+    { name: "Shooting OT (2×)", remaining: ot2Min, className: "bg-ruby/80", swatch: "bg-ruby" },
+    { name: "Overtime (1.5×)", remaining: ot15Min, className: "bg-amber/90", swatch: "bg-amber" },
   ];
 
   const segments: Segment[] = [];
@@ -65,8 +65,8 @@ function buildSegments(entry: DayEntry, rates: RateConfig): { segments: Segment[
       label: "Pre-call",
       startMin: 0,
       endMin: preCallMin,
-      className: "bg-accent/40 border-r border-accent/60",
-      swatch: "bg-accent/50",
+      className: "bg-orange-500/70",
+      swatch: "bg-orange-500",
     });
     cursor = preCallMin;
   }
@@ -177,9 +177,16 @@ export const DayTimeline = ({ entry, rates }: Props) => {
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono pt-2">
-        {b.preCall > 0 && <Legend swatch="bg-accent/50" label={`Pre-call ${fmtHours(b.preCall)}h`} />}
         <Legend swatch="bg-primary" label={`Basic ${fmtHours(b.basic)}h`} />
-        {b.ot15 > 0 && <Legend swatch="bg-amber" label={`OT 1.5× ${fmtHours(b.ot15)}h`} />}
+        {(b.preCall > 0 || b.ot15 > 0) && (
+          <div className="flex items-center gap-1.5">
+            <div className="flex -space-x-1">
+              {b.preCall > 0 && <div className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-obsidian" />}
+              {b.ot15 > 0 && <div className="w-2.5 h-2.5 rounded-full bg-amber border border-obsidian" />}
+            </div>
+            <span>Overtime {fmtHours(b.preCall + b.ot15)}h</span>
+          </div>
+        )}
         {b.ot2 > 0 && <Legend swatch="bg-ruby" label={`OT 2× ${fmtHours(b.ot2)}h`} />}
         {entry.mealMinutes > 0 && <Legend swatch="bg-muted" label={`Meal ${entry.mealMinutes}m`} />}
         {entry.isNight && <Legend swatch="bg-accent" label="Night premium" />}

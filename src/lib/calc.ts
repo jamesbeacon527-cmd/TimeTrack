@@ -99,7 +99,8 @@ const toMinutes = (hhmm: string) => {
 
 export function workedHours(entry: DayEntry, rates?: RateConfig): number {
   if (!entry.call || !entry.wrap) return 0;
-  const startStr = entry.actualStart && /^\d{2}:\d{2}$/.test(entry.actualStart) ? entry.actualStart : entry.call;
+  // Pre-call is handled entirely separately, so standard worked hours start at 'call'.
+  const startStr = entry.call;
   const endStr = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? entry.actualWrap : entry.wrap;
   const start = toMinutes(startStr);
   let end = toMinutes(endStr);
@@ -199,15 +200,13 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
     ? rates.dayRate * (rates.basicHours > 0 ? basic / rates.basicHours : 1)
     : basic * rates.hourlyRate;
 
-  // Pre-call premium: 
-  // Since `worked` already includes pre-call, it's already paid at basic or OT rate.
-  // We only add the "extra" multiplier part.
-  const preCallPremium = preCall * rates.hourlyRate * Math.max(0, rates.preCallRate - 1);
+  // Pre-call:
+  // Paid completely separately from the basic day and standard OT.
+  const preCallPay = preCall * rates.hourlyRate * rates.preCallRate * stackedMultiplier;
 
   const basicPay = rawBasicPay * stackedMultiplier;
   const ot15Pay = ot15 * rates.hourlyRate * 1.5 * stackedMultiplier;
   const ot2Pay = ot2 * rates.hourlyRate * 2 * stackedMultiplier;
-  const preCallPay = preCallPremium * stackedMultiplier;
   const travelPay = travelHours * rates.hourlyRate * stackedMultiplier;
   const nightPay = entry.isNight ? rates.nightPremium : 0;
   const perDiemPay = entry.perDiem ? rates.perDiem : 0;
@@ -220,6 +219,7 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
 export type Totals = {
   days: number;
   basicHours: number;
+  preCallHours: number;
   ot15Hours: number;
   ot2Hours: number;
   travelHours: number;
@@ -233,13 +233,14 @@ export type Totals = {
 export function totals(entries: DayEntry[], rates: RateConfig): Totals {
   const acc: Totals = {
     days: entries.length,
-    basicHours: 0, ot15Hours: 0, ot2Hours: 0, travelHours: 0,
+    basicHours: 0, preCallHours: 0, ot15Hours: 0, ot2Hours: 0, travelHours: 0,
     perDiems: 0, perDiemTotal: 0,
     subtotal: 0, vat: 0, grand: 0,
   };
   for (const e of entries) {
     const b = breakdown(e, rates);
     acc.basicHours += b.basic;
+    acc.preCallHours += b.preCall;
     acc.ot15Hours += b.ot15;
     acc.ot2Hours += b.ot2;
     acc.travelHours += b.travelHours;

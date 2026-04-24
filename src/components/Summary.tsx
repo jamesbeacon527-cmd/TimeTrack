@@ -2,11 +2,14 @@ import { Button } from "@/components/ui/button";
 import type { DayEntry, RateConfig } from "@/lib/calc";
 import { totals, fmtGBP, fmtHours } from "@/lib/calc";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type Props = { entries: DayEntry[]; rates: RateConfig; project: string };
 
 const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: string) => {
   const t = totals(entries, rates);
+  const combinedOTHours = t.ot15Hours + t.preCallHours;
+
   const rows = [
     ["TimeTrack Invoice", project],
     ["Generated", new Date().toLocaleString("en-GB")],
@@ -15,7 +18,7 @@ const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: strin
     ...entries.map((e) => [e.date, e.dayType ?? "shoot", e.location ?? "", e.call, e.actualStart ?? "", e.wrap, e.mealMinutes, e.travelMinutes, e.consecutiveDay ?? 1, e.isNight ? "Y" : "", e.perDiem ? "Y" : ""]),
     [],
     ["Basic hrs", t.basicHours.toFixed(2)],
-    ["OT 1.5x hrs", t.ot15Hours.toFixed(2)],
+    ["Overtime (OT) hrs", combinedOTHours.toFixed(2)],
     ["OT 2x hrs", t.ot2Hours.toFixed(2)],
     ["Travel hrs", t.travelHours.toFixed(2)],
     [`Per diems (${t.perDiems})`, t.perDiemTotal.toFixed(2)],
@@ -36,13 +39,15 @@ const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: strin
 
 export const Summary = ({ entries, rates, project }: Props) => {
   const t = totals(entries, rates);
+  const combinedOTHours = t.ot15Hours + t.preCallHours;
+
   return (
     <div className="bg-slate-glass/40 p-1 rounded-2xl border border-border backdrop-blur-sm">
       <div className="bg-obsidian rounded-xl p-8 space-y-10">
-        <div className="grid grid-cols-2 gap-8">
+        <div className={cn("grid grid-cols-2 gap-8", t.ot2Hours > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
           <Stat label="Standard Hours" value={fmtHours(t.basicHours)} />
-          <Stat label="Shooting OT @ 2x" value={fmtHours(t.ot2Hours)} tone="ruby" />
-          <Stat label="Overtime @ 1.5x" value={fmtHours(t.ot15Hours)} tone="amber" />
+          <Stat label="Overtime (OT)" value={fmtHours(combinedOTHours)} tone="amber" />
+          {t.ot2Hours > 0 && <Stat label="Shooting OT @ 2x" value={fmtHours(t.ot2Hours)} tone="ruby" />}
           <Stat label="Travel Hours" value={fmtHours(t.travelHours)} />
         </div>
 
@@ -78,13 +83,14 @@ export const Summary = ({ entries, rates, project }: Props) => {
   );
 };
 
-const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" | "amber" }) => (
+const Stat = ({ label, value, tone }: { label: string; value: string; tone?: "primary" | "ruby" | "amber" | "orange" }) => (
   <div className="space-y-1">
     <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">{label}</span>
     <p className={`text-3xl font-mono tracking-tighter ${
       tone === "primary" ? "text-primary" : 
       tone === "ruby" ? "text-ruby" : 
       tone === "amber" ? "text-amber" :
+      tone === "orange" ? "text-orange-500" :
       "text-foreground"
     }`}>{value}</p>
   </div>

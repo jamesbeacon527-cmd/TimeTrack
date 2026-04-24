@@ -142,12 +142,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setState(s => ({ ...s, isLoading: true }));
     
     const unsub = onSnapshot(collection(db, "users", user.uid, "projects"), async (snapshot) => {
-      // Avoid overwriting if we are in the middle of a local optimistic update
-      if (snapshot.metadata.hasPendingWrites || syncLock.current > 0) {
-        setState(s => ({ ...s, isSyncing: true }));
-        return;
-      }
-
+      // If we have local pending writes or sync lock, we shouldn't overwrite our optimistic local state
+      // but we still need to process new projects or other changes eventually.
+      // However, typical simple way is to let metadata.hasPendingWrites pass through, 
+      // but map carefully so we don't clobber local edits.
       const projectDocs = snapshot.docs;
       
       // Migration logic: Only run if it's the first time we load cloud and it's empty
@@ -244,7 +242,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Persistence to localStorage
   useEffect(() => {
-    if (!state.isLoading && !isSyncingFromCloud.current) {
+    if (!state.isLoading) {
       localStorage.setItem(PROJECTS_KEY, JSON.stringify(state.projects));
       localStorage.setItem(ACTIVE_KEY, JSON.stringify(state.activeId));
     }
