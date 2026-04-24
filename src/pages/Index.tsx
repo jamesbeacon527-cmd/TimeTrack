@@ -57,7 +57,6 @@ const Index = () => {
         <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0">
           <div className="flex justify-between items-start w-full md:w-auto">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
-              <span className="text-[9px] md:text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-medium block mb-1 md:mb-2 italic">Production Interface v1.1 Mobile-Ready</span>
               <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
                 <img src="/logo.svg" alt="TimeTrack Logo" className="size-6 md:size-8" />
                 TIME<span className="font-semibold italic text-foreground tracking-tighter">TRACK</span>
@@ -310,7 +309,6 @@ const Index = () => {
 
         <footer className="py-12 flex flex-col sm:flex-row justify-between items-center gap-6 text-[11px] font-mono uppercase tracking-[0.3em] text-muted-foreground border-t border-border/80 shrink-0">
           <div className="font-medium">© TimeTrack — {new Date().getFullYear()} UK Crew Hours</div>
-          <div className="font-medium">Local-first · No account required</div>
         </footer>
       </div>
     </div>
