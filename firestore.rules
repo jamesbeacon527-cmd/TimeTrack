@@ -60,5 +60,12 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(entryId);
       }
     }
+    function isValidBug(data) {
+      return data.description is string && data.description.size() <= 10000;
+    }
+
+    match /bugs/{bugId} {
+      allow create: if isValidBug(incoming());
+    }
   }
 }

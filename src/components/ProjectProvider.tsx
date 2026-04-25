@@ -54,9 +54,33 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 const PROJECTS_KEY = "slatetrack.projects.v2";
 const ACTIVE_KEY = "slatetrack.activeProject.v2";
 
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function safeSet(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore
+  }
+}
+
+export function safeRemove(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore
+  }
+}
+
 function load<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = safeGet(key);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -73,7 +97,7 @@ function mergeRates(stored: Partial<RateConfig> | undefined): RateConfig {
 }
 
 function initial(): { projects: Project[]; activeId: string } {
-  const raw = localStorage.getItem(PROJECTS_KEY);
+  const raw = safeGet(PROJECTS_KEY);
   if (raw) {
     try {
       const existing = JSON.parse(raw) as Project[];
@@ -89,11 +113,8 @@ function initial(): { projects: Project[]; activeId: string } {
     }
   }
   
-  const migrated = migrateLegacy();
-  if (migrated) return { projects: migrated, activeId: migrated[0].id };
-  
   const fresh: Project = {
-    id: crypto.randomUUID(),
+    id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
     name: "Untitled Production",
     createdAt: new Date().toISOString(),
     rates: DEFAULT_RATES,
@@ -103,7 +124,7 @@ function initial(): { projects: Project[]; activeId: string } {
 }
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useFirebase();
+  const { user, loading: authLoading } = useFirebase();
   const [state, setState] = useState<ProjectState>({
     projects: [],
     activeId: "",
@@ -115,6 +136,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const syncLock = useRef(0);
   const projectsRef = useRef<Project[]>([]);
   const hasEverLoadedCloud = useRef(false);
+  const wasLoggedIn = useRef(false);
 
   useEffect(() => {
     projectsRef.current = state.projects;
@@ -243,19 +265,25 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Persistence to localStorage
   useEffect(() => {
     if (!state.isLoading) {
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(state.projects));
-      localStorage.setItem(ACTIVE_KEY, JSON.stringify(state.activeId));
+      safeSet(PROJECTS_KEY, JSON.stringify(state.projects));
+      safeSet(ACTIVE_KEY, JSON.stringify(state.activeId));
     }
   }, [state.projects, state.activeId, state.isLoading]);
 
   // Clear local storage on logout to prevent state mixups
   useEffect(() => {
-    if (!user) {
-      // Optional: clear if you want fresh state every logout
-      // localStorage.removeItem(PROJECTS_KEY);
-      // localStorage.removeItem(ACTIVE_KEY);
+    if (user) {
+      wasLoggedIn.current = true;
+    } else if (!authLoading && wasLoggedIn.current && user === null) {
+      // User was logged in, auth is not loading, and user is null -> they logged out!
+      safeRemove(PROJECTS_KEY);
+      safeRemove(ACTIVE_KEY);
+      
+      setState({ projects: [], activeId: "", isLoading: false, isSyncing: false });
+      hasEverLoadedCloud.current = false;
+      wasLoggedIn.current = false;
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const active = useMemo(() => {
     if (state.isLoading || state.projects.length === 0) {
@@ -297,7 +325,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const createProject = async (name: string, initialRates?: RateConfig) => {
     const p: Project = {
-      id: crypto.randomUUID(),
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
       name: name.trim() || "New Production",
       createdAt: new Date().toISOString(),
       rates: initialRates || DEFAULT_RATES,
@@ -360,7 +388,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!src) return;
     const copy: Project = { 
       ...src, 
-      id: crypto.randomUUID(), 
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
       name: `${src.name} (copy)`, 
       createdAt: new Date().toISOString() 
     };
@@ -402,7 +430,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addEntry = async (e: Omit<DayEntry, "id">) => {
     const aid = state.activeId;
     if (!aid) return;
-    const newEntry = { ...e, id: crypto.randomUUID() };
+    const newEntry = { ...e, id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15) };
     setState(s => ({
       ...s,
       projects: s.projects.map(p => p.id === aid ? { ...p, entries: [newEntry, ...p.entries] } : p)

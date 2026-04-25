@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FirebaseProvider } from "@/components/FirebaseProvider";
 import { ProjectProvider } from "@/components/ProjectProvider";
+import { BugReportDialog } from "@/components/BugReportDialog";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -19,6 +20,7 @@ const App = () => (
           <TooltipProvider>
           <Toaster />
           <Sonner />
+          <BugReportDialog />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
