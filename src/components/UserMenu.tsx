@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFirebase } from "./FirebaseProvider";
 import { useProjects } from "@/hooks/useProjects";
 import { Button } from "./ui/button";
@@ -15,10 +15,25 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserMenu() {
-  const { user, login, logout, loading } = useFirebase();
+  const { user, userData, login, logout, loading } = useFirebase();
   const { isSyncing } = useProjects();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [tokenRole, setTokenRole] = useState<string>('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      user.getIdTokenResult(false).then(res => {
+        const claimsRole = res.claims.role as string;
+        const isAdmin = res.claims.admin ? "Admin" : "";
+        setTokenRole(claimsRole || isAdmin || "");
+      }).catch(console.error);
+    } else {
+      setTokenRole("");
+    }
+  }, [user]);
+
+  const displayRole = tokenRole || userData?.role;
 
   const handleLogin = async () => {
     setIsLoggingIn(true);
@@ -64,7 +79,8 @@ export function UserMenu() {
         ) : (
           <LogIn className="size-3" />
         )}
-        {isLoggingIn ? "Connecting..." : "Sync Devices"}
+        <span className="hidden sm:inline">{isLoggingIn ? "Connecting..." : "Sync Devices"}</span>
+        <span className="sm:hidden">Sync</span>
       </Button>
     );
   }
@@ -74,7 +90,7 @@ export function UserMenu() {
   return (
     <div className="flex items-center gap-2">
       {user && (
-        <div className={`px-2 py-1 rounded-md border transition-colors ${
+        <div className={`hidden sm:block px-2 py-1 rounded-md border transition-colors ${
           isSyncing 
             ? "bg-volt/10 text-volt border-volt/20" 
             : "bg-primary/10 text-primary border-primary/20"
@@ -96,7 +112,14 @@ export function UserMenu() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                {displayRole && (
+                  <span className="bg-primary/20 text-primary uppercase tracking-widest text-[9px] px-1.5 py-0.5 rounded-full font-bold">
+                    {displayRole}
+                  </span>
+                )}
+              </div>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             </div>
           </DropdownMenuLabel>

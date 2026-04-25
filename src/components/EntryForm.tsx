@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { DayEntry, DayType } from "@/lib/calc";
-import { DAY_TYPES, DAY_TYPE_LABELS } from "@/lib/calc";
+import { Trash2, Plus } from "lucide-react";
+import type { DayEntry, DayType, Expense } from "@/lib/calc";
+import { DAY_TYPES, DAY_TYPE_LABELS, fmtDate } from "@/lib/calc";
 
 type Props = { 
   onSubmit: (entry: Omit<DayEntry, "id">) => void; 
@@ -13,7 +14,7 @@ type Props = {
   basicHours?: number 
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => fmtDate(new Date());
 
 // Add hours (decimal) to a HH:MM time string, wrapping at 24h.
 const addHoursToTime = (hhmm: string, hours: number): string => {
@@ -73,6 +74,19 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const [perDiem, setPerDiem] = useState(false);
   const [shootingOT, setShootingOT] = useState(defaultShootingOT);
   const [shootingOTMinutes, setShootingOTMinutes] = useState<number>(defaultShootingOTMinutes);
+  const [consecutiveDay, setConsecutiveDay] = useState<number>(1);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  const addExpense = () => {
+    const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+    setExpenses(prev => [...prev, { id, description: "", amount: 0 }]);
+  };
+  const updateExpense = (id: string, field: keyof Expense, value: string | number) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  };
+  const removeExpense = (id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +150,8 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         isNight, 
         perDiem, 
         shootingOT, 
+        consecutiveDay,
+        expenses: expenses.filter(e => e.description.trim() || e.amount > 0)
       };
       if (actualStart) payload.actualStart = actualStart;
       if (actualWrap) payload.actualWrap = actualWrap;
@@ -148,7 +164,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       // Roll date forward to next day
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
-      setDate(nextDay.toISOString().slice(0, 10));
+      setDate(fmtDate(nextDay));
 
       // Reset specific fields after successful capture
       setActualStart("");
@@ -157,6 +173,8 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       setPerDiem(false);
       setShootingOT(defaultShootingOT);
       setShootingOTMinutes(defaultShootingOTMinutes);
+      setConsecutiveDay(1);
+      setExpenses([]);
     } catch (err) {
       // Hook handles logging/toast
     } finally {
@@ -261,6 +279,75 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         </>
       )}
 
+      <Field label="Day in week" className="md:col-span-2">
+        <div className="flex gap-2">
+          {[
+            { value: 1, label: "Standard (1-5)" },
+            { value: 6, label: "6th Day" },
+            { value: 7, label: "7th Day" }
+          ].map((opt) => {
+            const active = opt.value === consecutiveDay;
+            const tone = opt.value === 7 ? "ruby" : opt.value === 6 ? "orange" : "primary";
+            return (
+              <button key={opt.value} type="button" onClick={() => setConsecutiveDay(opt.value)} aria-pressed={active}
+                className={`flex-1 py-3 rounded-lg text-xs font-semibold uppercase tracking-widest border transition-colors ${
+                  active
+                    ? tone === "ruby"
+                      ? "bg-ruby text-background border-ruby"
+                      : tone === "orange"
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : "bg-primary text-primary-foreground border-primary"
+                    : "bg-obsidian text-muted-foreground border-border hover:text-foreground"
+                }`}>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono mt-1">6th day = 1.5×, 7th day = 2× (BECTU)</p>
+      </Field>
+
+      <div className="md:col-span-2 space-y-4 pt-2">
+        <div className="flex items-center justify-between border-b border-border/60 pb-2">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Expenses</label>
+          <Button type="button" variant="outlineGlass" size="sm" onClick={addExpense} className="h-7 text-[10px] px-2 gap-1">
+            <Plus className="size-3" /> Add Expense
+          </Button>
+        </div>
+        {expenses.length > 0 ? (
+          <div className="space-y-3">
+            {expenses.map((exp, i) => (
+              <div key={exp.id} className="flex items-center gap-3 bg-obsidian/50 p-3 rounded-lg border border-border">
+                <div className="flex-1 space-y-1">
+                  <input
+                    value={exp.description}
+                    onChange={e => updateExpense(exp.id, "description", e.target.value)}
+                    placeholder="e.g., Taxi, Lunch"
+                    className="w-full bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                <div className="w-24 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">£</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={exp.amount || ""}
+                    onChange={e => updateExpense(exp.id, "amount", parseFloat(e.target.value) || 0)}
+                    className="w-full bg-carbon border border-border rounded-md pl-6 pr-3 py-2 text-sm text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60"
+                  />
+                </div>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeExpense(exp.id)} className="size-8 text-muted-foreground hover:text-red-500">
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[10px] text-muted-foreground px-1 italic">No expenses recorded.</p>
+        )}
+      </div>
+
       <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {!isRest && !isTravel && (
           <label className="flex items-center gap-3 cursor-pointer select-none bg-obsidian/60 border border-border rounded-lg px-4 py-3 hover:border-primary/40 transition-colors">
@@ -305,7 +392,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
         </Button>
         <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
-          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); }}>
+          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); }}>
           Reset Form
         </Button>
       </div>

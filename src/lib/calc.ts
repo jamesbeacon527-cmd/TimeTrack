@@ -14,6 +14,12 @@ export const DAY_TYPE_LABELS: Record<DayType, string> = {
   rest: "Rest",
 };
 
+export type Expense = {
+  id: string;
+  description: string;
+  amount: number;
+};
+
 export type DayEntry = {
   id: string;
   date: string;           // YYYY-MM-DD
@@ -29,8 +35,9 @@ export type DayEntry = {
   perDiem?: boolean;      // claim per-diem for this day
   shootingOT?: boolean;   // when true, first `shootingOTMinutes` (per-entry override or rates default) after basic count at 2× then 1.5×; otherwise all OT is 1.5×
   shootingOTMinutes?: number; // per-entry override of how many minutes count at 2× when shootingOT is on
-  consecutiveDay?: number; // 1-7 within the working week (6th/7th trigger premiums)
+  consecutiveDay?: number; // 1 (standard), 6 (6th day), 7 (7th day)
   notes?: string;
+  expenses?: Expense[];
 };
 
 // Multiplier applied to the day's pay (basic + OT) per day type.
@@ -140,21 +147,25 @@ export type DayBreakdown = {
   nightPay: number;
   perDiemPay: number;
   kitRental: number;
+  expensesTotal: number;
   consecutiveMultiplier: number;
   dayTypeMultiplier: number;
   total: number;
 };
 
-export const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
+export const fmtDate = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 /**
  * Heuristic to determine the worked day index (1-7) within a week.
  * Projects usually follow Monday-start ISO weeks.
  */
 export function getConsecutiveDay(date: string): number {
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Sun, 1=Mon...
-  return day === 0 ? 7 : day;
+  return 1; // Explicit tagging is now required, auto-fallback is disabled
 }
 
 export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
@@ -188,7 +199,7 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
 
   // Consecutive-day premium (BECTU 6th/7th day rules).
   let consecutiveMultiplier = 1;
-  const dayIndex = entry.consecutiveDay ?? getConsecutiveDay(entry.date);
+  const dayIndex = entry.consecutiveDay ?? 1; // Default to 1, requires explicit 6 or 7
   
   if (dayIndex === 6) consecutiveMultiplier = rates.sixthDayMultiplier;
   else if (dayIndex >= 7) consecutiveMultiplier = rates.seventhDayMultiplier;
@@ -211,9 +222,11 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
   const nightPay = entry.isNight ? rates.nightPremium : 0;
   const perDiemPay = entry.perDiem ? rates.perDiem : 0;
   const kitRental = rates.kitRentalPerDay || 0;
+  
+  const expensesTotal = entry.expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
 
-  const total = basicPay + ot15Pay + ot2Pay + preCallPay + travelPay + nightPay + perDiemPay + kitRental;
-  return { worked, basic, ot15, ot2, preCall, travelHours, basicPay, ot15Pay, ot2Pay, preCallPay, travelPay, nightPay, perDiemPay, kitRental, consecutiveMultiplier, dayTypeMultiplier, total };
+  const total = basicPay + ot15Pay + ot2Pay + preCallPay + travelPay + nightPay + perDiemPay + kitRental + expensesTotal;
+  return { worked, basic, ot15, ot2, preCall, travelHours, basicPay, ot15Pay, ot2Pay, preCallPay, travelPay, nightPay, perDiemPay, kitRental, expensesTotal, consecutiveMultiplier, dayTypeMultiplier, total };
 }
 
 export type Totals = {
@@ -225,6 +238,7 @@ export type Totals = {
   travelHours: number;
   perDiems: number;
   perDiemTotal: number;
+  expensesTotal: number;
   subtotal: number;
   vat: number;
   grand: number;
@@ -234,7 +248,7 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
   const acc: Totals = {
     days: entries.length,
     basicHours: 0, preCallHours: 0, ot15Hours: 0, ot2Hours: 0, travelHours: 0,
-    perDiems: 0, perDiemTotal: 0,
+    perDiems: 0, perDiemTotal: 0, expensesTotal: 0,
     subtotal: 0, vat: 0, grand: 0,
   };
   for (const e of entries) {
@@ -244,6 +258,7 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
     acc.ot15Hours += b.ot15;
     acc.ot2Hours += b.ot2;
     acc.travelHours += b.travelHours;
+    acc.expensesTotal += b.expensesTotal;
     acc.subtotal += b.total;
     if (e.perDiem) {
       acc.perDiems += 1;

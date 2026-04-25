@@ -112,6 +112,12 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
               <span className="text-muted-foreground uppercase text-[10px]">Per Diems ({summary.perDiems})</span>
               <span className="text-foreground">{fmtGBP(summary.perDiemTotal)}</span>
             </div>
+            {summary.expensesTotal > 0 && (
+              <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
+                <span className="text-muted-foreground uppercase text-[10px]">Expenses</span>
+                <span className="text-foreground">{fmtGBP(summary.expensesTotal)}</span>
+              </div>
+            )}
           </dl>
         </div>
         

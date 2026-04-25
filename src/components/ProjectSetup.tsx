@@ -6,11 +6,12 @@ import { DEFAULT_RATES } from "@/lib/calc";
 
 type Props = {
   onCancel: () => void;
-  onSave: (name: string, rates: RateConfig) => void;
+  onSave: (name: string, role: string, rates: RateConfig) => void;
 };
 
 export const ProjectSetup = ({ onCancel, onSave }: Props) => {
   const [name, setName] = useState("");
+  const [role, setRole] = useState("");
   const [rates, setRates] = useState<RateConfig>(DEFAULT_RATES);
 
   const updateRate = <K extends keyof RateConfig>(k: K, v: RateConfig[K]) => 
@@ -19,7 +20,7 @@ export const ProjectSetup = ({ onCancel, onSave }: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSave(name.trim(), rates);
+    onSave(name.trim(), role.trim(), rates);
   };
 
   return (
@@ -36,16 +37,28 @@ export const ProjectSetup = ({ onCancel, onSave }: Props) => {
 
       <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <section className="bg-carbon/40 rounded-3xl border border-border p-8 space-y-6">
-          <div className="space-y-4">
-            <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground font-bold px-1">Production Details</label>
-            <input 
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Project Nightfall"
-              required
-              className="w-full bg-obsidian border border-border rounded-xl px-6 py-4 text-xl text-foreground focus:outline-none focus:border-primary/60 transition-colors"
-            />
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground font-bold px-1">Production Details</label>
+              <input 
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Project Nightfall"
+                required
+                className="w-full bg-obsidian border border-border rounded-xl px-6 py-4 text-xl text-foreground focus:outline-none focus:border-primary/60 transition-colors placeholder:text-muted-foreground/30"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Your Role / Department</label>
+              <input 
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="e.g. Gaffer, Sound Mixer, DOP..."
+                className="w-full bg-obsidian border border-border rounded-xl px-4 py-3 text-foreground transition-colors focus:border-primary/60 outline-none"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

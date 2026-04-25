@@ -40,7 +40,14 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <h3 className="text-xl font-medium text-foreground truncate pr-4">{p.name}</h3>
+                  <div className="flex flex-col gap-0.5">
+                    {p.crewRole && (
+                      <span className="text-[9px] font-bold text-primary uppercase tracking-[0.15em] leading-none mb-1">
+                        {p.crewRole}
+                      </span>
+                    )}
+                    <h3 className="text-xl font-medium text-foreground truncate pr-4">{p.name}</h3>
+                  </div>
                   <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
                     Created {new Date(p.createdAt).toLocaleDateString("en-GB")}
                   </p>

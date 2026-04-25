@@ -19,7 +19,6 @@ const startOfWeek = (d: Date) => {
   return date;
 };
 
-const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
 const fmtDay = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "short" }).toUpperCase();
 const fmtDayNum = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 const fmtRange = (a: Date, b: Date) =>
@@ -102,14 +101,14 @@ export const WeekCalendar = ({ entries, rates }: Props) => {
           const list = byDate.get(key) || [];
           const isToday = key === todayKey;
 
-          const dayIndex = getConsecutiveDay(key);
+          const manualDayIndex = list.find(e => e.consecutiveDay && e.consecutiveDay > 1)?.consecutiveDay ?? 1;
           const hasWorked = list.some(e => e.dayType !== 'rest');
           
           let outlineClass = "border-border";
           if (isToday) outlineClass = "border-primary/40";
           else if (hasWorked) {
-            if (dayIndex === 6) outlineClass = "border-amber/50";
-            else if (dayIndex === 7) outlineClass = "border-ruby/50";
+            if (manualDayIndex === 6) outlineClass = "border-orange-500/50";
+            else if (manualDayIndex === 7) outlineClass = "border-ruby/50";
             else outlineClass = "border-primary/25";
           }
 

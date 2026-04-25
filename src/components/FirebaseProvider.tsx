@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface FirebaseContextType {
   user: User | null;
+  userData: any | null;
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -14,6 +15,7 @@ const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,15 +24,21 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         // Sync user profile
         const userRef = doc(db, "users", u.uid);
         const userSnap = await getDoc(userRef);
+        let data = userSnap.data();
         if (!userSnap.exists()) {
-          await setDoc(userRef, {
+          const newData = {
             id: u.uid,
             email: u.email,
             displayName: u.displayName,
             createdAt: new Date().toISOString(), // Rules logic expects string for now based on DRAFT
             updatedAt: serverTimestamp()
-          });
+          };
+          await setDoc(userRef, newData);
+          data = newData;
         }
+        setUserData(data || null);
+      } else {
+        setUserData(null);
       }
       setUser(u);
       setLoading(false);
@@ -51,7 +59,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <FirebaseContext.Provider value={{ user, loading, login, logout: handleLogout }}>
+    <FirebaseContext.Provider value={{ user, userData, loading, login, logout: handleLogout }}>
       {children}
     </FirebaseContext.Provider>
   );

@@ -2,11 +2,18 @@ import { useState } from "react";
 import type { RateConfig, DayType } from "@/lib/calc";
 import { DAY_TYPES, DAY_TYPE_LABELS } from "@/lib/calc";
 
-type Props = { rates: RateConfig; onChange: (r: RateConfig) => void; project: string; onProject: (s: string) => void };
+type Props = { 
+  rates: RateConfig; 
+  onChange: (r: RateConfig) => void; 
+  project: string; 
+  onProject: (s: string) => void;
+  role: string;
+  onRole: (s: string) => void;
+};
 
 type Tab = "rates" | "dayTypes" | "bectu";
 
-export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
+export const RatesPanel = ({ rates, onChange, project, onProject, role, onRole }: Props) => {
   const [tab, setTab] = useState<Tab>("rates");
 
   const set = <K extends keyof RateConfig>(k: K, v: RateConfig[K]) => {
@@ -37,11 +44,19 @@ export const RatesPanel = ({ rates, onChange, project, onProject }: Props) => {
 
   return (
     <div className="bg-carbon border border-border rounded-2xl p-6 space-y-5">
-      <div className="space-y-3">
-        <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Production Title</label>
-        <input value={project} onChange={(e) => onProject(e.target.value.slice(0, 80))}
-          placeholder="Enter production title..."
-          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Production Title</label>
+          <input value={project} onChange={(e) => onProject(e.target.value.slice(0, 80))}
+            placeholder="Enter production title..."
+            className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">Your Role</label>
+          <input value={role} onChange={(e) => onRole(e.target.value.slice(0, 50))}
+            placeholder="e.g. Gaffer, Sound Mixer..."
+            className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors" />
+        </div>
       </div>
 
       <div className="flex gap-1 bg-obsidian border border-border rounded-lg p-1">

@@ -17,6 +17,7 @@ import {
 export type Project = {
   id: string;
   name: string;
+  crewRole?: string;
   createdAt: string;
   rates: RateConfig;
   entries: DayEntry[];
@@ -35,15 +36,18 @@ type ProjectContextType = {
   isLoading: boolean;
   isSyncing: boolean;
   setActive: (id: string) => void;
-  createProject: (name: string, initialRates?: RateConfig) => Promise<void>;
+  createProject: (name: string, crewRole?: string, initialRates?: RateConfig) => Promise<void>;
   renameProject: (id: string, name: string) => Promise<void>;
+  setCrewRole: (id: string, role: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<void>;
   entries: DayEntry[];
   rates: RateConfig;
   project: string;
+  crewRole: string;
   setRates: (rates: RateConfig) => Promise<void>;
   setProject: (name: string) => Promise<void>;
+  setRole: (role: string) => Promise<void>;
   addEntry: (e: Omit<DayEntry, "id">) => Promise<void>;
   updateEntry: (id: string, patch: Partial<DayEntry>) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
@@ -323,10 +327,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Actions
   const setActive = (id: string) => setState(s => ({ ...s, activeId: id }));
 
-  const createProject = async (name: string, initialRates?: RateConfig) => {
+  const createProject = async (name: string, crewRole?: string, initialRates?: RateConfig) => {
     const p: Project = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
       name: name.trim() || "New Production",
+      crewRole: crewRole?.trim() || "",
       createdAt: new Date().toISOString(),
       rates: initialRates || DEFAULT_RATES,
       entries: [],
@@ -355,6 +360,26 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         await setDoc(doc(db, "users", user.uid, "projects", id), {
           name: name.trim(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
+      } finally {
+        setSyncing(false);
+      }
+    }
+  };
+
+  const setCrewRole = async (id: string, role: string) => {
+    setState(s => ({
+      ...s,
+      projects: s.projects.map(p => p.id === id ? { ...p, crewRole: role.trim() } : p)
+    }));
+    if (user) {
+      setSyncing(true);
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", id), {
+          crewRole: role.trim(),
           updatedAt: serverTimestamp()
         }, { merge: true });
       } catch (err) {
@@ -506,13 +531,16 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActive,
     createProject,
     renameProject,
+    setCrewRole,
     deleteProject,
     duplicateProject,
     entries: active.entries,
     rates: active.rates,
     project: active.name,
+    crewRole: active.crewRole || "",
     setRates,
     setProject: (name: string) => renameProject(state.activeId, name),
+    setRole: (role: string) => setCrewRole(state.activeId, role),
     addEntry,
     updateEntry,
     removeEntry,

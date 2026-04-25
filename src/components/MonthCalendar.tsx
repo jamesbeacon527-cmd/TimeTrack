@@ -24,7 +24,6 @@ const startOfMonthGrid = (d: Date) => {
   return x;
 };
 
-const fmtKey = (d: Date) => d.toISOString().slice(0, 10);
 
 const DAY_TYPE_TONE: Record<string, string> = {
   shoot: "bg-primary",
@@ -78,7 +77,7 @@ export const MonthCalendar = ({ entries, rates, onSelectDay }: Props) => {
     setAnchor(next);
   };
 
-  const todayKey = fmtKey(new Date());
+  const todayKey = fmtDate(new Date());
   const monthLabel = anchor.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -123,14 +122,14 @@ export const MonthCalendar = ({ entries, rates, onSelectDay }: Props) => {
           const dayTotal = list.reduce((s, e) => s + breakdown(e, rates).total, 0);
           const dayHours = list.reduce((s, e) => s + breakdown(e, rates).worked, 0);
 
-          const dayIndex = getConsecutiveDay(key);
+          const manualDayIndex = list.find(e => e.consecutiveDay && e.consecutiveDay > 1)?.consecutiveDay ?? 1;
           const hasWorked = list.some(e => e.dayType !== 'rest');
           
           let outlineClass = inMonth ? "border-border hover:border-primary/30" : "border-border/30 opacity-50 bg-obsidian/40";
           if (isToday) outlineClass = "border-primary/60";
           else if (hasWorked) {
-            if (dayIndex === 6) outlineClass = "border-amber shadow-[inset_0_0_8px_rgba(245,158,11,0.1)]";
-            else if (dayIndex === 7) outlineClass = "border-ruby shadow-[inset_0_0_8px_rgba(239,68,68,0.1)]";
+            if (manualDayIndex === 6) outlineClass = "border-orange-500 shadow-[inset_0_0_8px_rgba(249,115,22,0.1)]";
+            else if (manualDayIndex === 7) outlineClass = "border-ruby shadow-[inset_0_0_8px_rgba(239,68,68,0.1)]";
             else outlineClass = "border-primary/40 shadow-[inset_0_0_8px_rgba(var(--primary),0.05)]";
           }
 

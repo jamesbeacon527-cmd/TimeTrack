@@ -21,8 +21,8 @@ type CalView = "week" | "month";
 
 const Index = () => {
   const {
-    projects, active, setActive, createProject, renameProject, deleteProject, duplicateProject,
-    entries, addEntry, updateEntry, removeEntry, rates, setRates, project, setProject, isLoading,
+    projects, active, setActive, createProject, renameProject, setCrewRole, deleteProject, duplicateProject,
+    entries, addEntry, updateEntry, removeEntry, rates, setRates, project, setProject, crewRole, setRole, isLoading,
   } = useProjects();
 
   const [showRates, setShowRates] = useState(false);
@@ -54,15 +54,15 @@ const Index = () => {
   return (
     <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12">
-        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0">
-          <div className="flex justify-between items-start w-full md:w-auto">
+        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0">
+          <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
               <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
                 <img src="/logo.svg" alt="TimeTrack Logo" className="size-6 md:size-8" />
                 TIME<span className="font-semibold italic text-foreground tracking-tighter">TRACK</span>
               </h1>
             </button>
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2 lg:hidden">
               <UserMenu />
               <ThemeToggle />
               {view !== "home" && (
@@ -72,8 +72,8 @@ const Index = () => {
               )}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full md:w-auto max-w-full overflow-x-auto pb-1 sm:pb-0">
-            <div className="hidden md:flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full lg:w-auto max-w-full overflow-x-auto pb-1 sm:pb-0">
+            <div className="hidden lg:flex items-center gap-2">
               <UserMenu />
               <ThemeToggle />
             </div>
@@ -114,7 +114,7 @@ const Index = () => {
               ))}
             </div>
             {view !== "home" && (
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <Button variant="outlineGlass" size="default" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings">
                   {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
                 </Button>
@@ -139,22 +139,22 @@ const Index = () => {
           ) : view === "setup" ? (
             <ProjectSetup 
               onCancel={() => setView("home")}
-              onSave={(name, rates) => {
-                createProject(name, rates);
+              onSave={(name, role, rates) => {
+                createProject(name, role, rates);
                 setView("capture");
               }}
             />
           ) : (
             <>
               {/* Desktop Resizable View */}
-              <div className="hidden md:block h-full">
+              <div className="hidden lg:block h-full">
                 <PanelGroup direction="horizontal" className="h-full" key={view}>
                   {view === "capture" ? (
                     <>
                       <Panel id="log-pane" order={1} defaultSize={30} minSize={20}>
                         <div className="h-full pr-10 overflow-y-auto space-y-6 custom-scrollbar">
                           <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Recent Captured Time</h3>
+                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Recent Captured Time</h3>
                             <span className="text-[10px] font-mono text-muted-foreground bg-carbon px-2 py-0.5 rounded-full border border-border">
                               {entries.length} {entries.length === 1 ? "DAY" : "DAYS"}
                             </span>
@@ -170,7 +170,7 @@ const Index = () => {
                       <Panel id="capture-pane" order={2} defaultSize={40} minSize={30}>
                         <div className="h-full px-10 overflow-y-auto space-y-8 custom-scrollbar">
                           <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">Session Capture</h3>
+                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Session Capture</h3>
                           </div>
                           <div className="bg-carbon/40 rounded-3xl p-8 border border-border shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16 rounded-full" aria-hidden />
@@ -222,12 +222,12 @@ const Index = () => {
                   <Panel id="side-pane" order={3} defaultSize={30} minSize={25}>
                     <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar">
                       <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
                           {showRates ? "Project Settings" : "Production Summary"}
                         </h3>
                       </div>
                       {showRates ? (
-                        <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} />
+                        <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
                       ) : (
                         <Summary entries={entries} rates={rates} project={project} />
                       )}
@@ -237,7 +237,7 @@ const Index = () => {
               </div>
 
               {/* Mobile Scrolling View */}
-              <div className="md:hidden flex flex-col space-y-12">
+              <div className="lg:hidden flex flex-col space-y-12">
                 {view === "capture" && (
                   <>
                     <div className="space-y-4">
@@ -297,7 +297,7 @@ const Index = () => {
                     </h3>
                   </div>
                   {showRates ? (
-                    <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} />
+                    <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
                   ) : (
                     <Summary entries={entries} rates={rates} project={project} />
                   )}

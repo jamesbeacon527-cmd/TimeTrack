@@ -54,7 +54,9 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
       <DropdownMenuTrigger asChild>
         <Button variant="outlineGlass" size="default" className="min-w-[14rem] justify-between">
           <span className="truncate text-left">
-            <span className="block text-[9px] font-mono uppercase tracking-widest text-muted-foreground">Project</span>
+            <span className="block text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
+              {active?.crewRole || "Project"}
+            </span>
             <span className="block text-foreground font-medium tracking-tight uppercase truncate">{active?.name}</span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground shrink-0 ml-2" />
@@ -79,7 +81,10 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
                 <Check className={`size-3.5 ${isActive ? "text-primary" : "opacity-0"}`} />
                 <span className="truncate">
                   <span className="block text-sm text-foreground truncate">{p.name}</span>
-                  <span className="block text-[10px] font-mono text-muted-foreground">{p.entries.length} day{p.entries.length === 1 ? "" : "s"}</span>
+                  <div className="flex items-center gap-1.5">
+                    {p.crewRole && <span className="text-[9px] uppercase tracking-widest text-primary font-bold">{p.crewRole}</span>}
+                    <span className="text-[10px] font-mono text-muted-foreground">{p.entries.length} day{p.entries.length === 1 ? "" : "s"}</span>
+                  </div>
                 </span>
               </span>
               <span className="flex items-center gap-1 shrink-0">

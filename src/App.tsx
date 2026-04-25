@@ -7,32 +7,35 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { FirebaseProvider } from "@/components/FirebaseProvider";
 import { ProjectProvider } from "@/components/ProjectProvider";
 import { BugReportDialog } from "@/components/BugReportDialog";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <FirebaseProvider>
-      <ProjectProvider>
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BugReportDialog />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-      </ProjectProvider>
-    </FirebaseProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <FirebaseProvider>
+        <ProjectProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark">
+            <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BugReportDialog />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+        </ProjectProvider>
+      </FirebaseProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

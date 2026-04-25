@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { DayEntry, DayType } from "@/lib/calc";
+import { Trash2, Plus } from "lucide-react";
+import type { DayEntry, DayType, Expense } from "@/lib/calc";
 import { DAY_TYPES, DAY_TYPE_LABELS } from "@/lib/calc";
 
 type Props = {
@@ -51,6 +52,18 @@ export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLo
   const [shootingOT, setShootingOT] = useState(!!entry.shootingOT);
   const [shootingOTMinutes, setShootingOTMinutes] = useState<number>(entry.shootingOTMinutes ?? 60);
   const [consecutiveDay, setConsecutiveDay] = useState<number>(entry.consecutiveDay ?? 1);
+  const [expenses, setExpenses] = useState<Expense[]>(entry.expenses ?? []);
+
+  const addExpense = () => {
+    const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+    setExpenses(prev => [...prev, { id, description: "", amount: 0 }]);
+  };
+  const updateExpense = (id: string, field: keyof Expense, value: string | number) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  };
+  const removeExpense = (id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  };
 
   // Reset state if a different entry becomes active.
   useEffect(() => {
@@ -68,6 +81,7 @@ export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLo
     setShootingOT(!!entry.shootingOT);
     setShootingOTMinutes(entry.shootingOTMinutes ?? 60);
     setConsecutiveDay(entry.consecutiveDay ?? 1);
+    setExpenses(entry.expenses ?? []);
   }, [entry.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = (e: React.FormEvent) => {
@@ -120,7 +134,8 @@ export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLo
       isNight, 
       perDiem, 
       shootingOT, 
-      consecutiveDay 
+      consecutiveDay,
+      expenses: expenses.filter(e => e.description.trim() || e.amount > 0)
     };
     if (actualStart) patch.actualStart = actualStart;
     else patch.actualStart = "";
@@ -224,29 +239,72 @@ export const EntryEditor = ({ entry, onSave, onCancel, allEntries = [], recentLo
         </span>
       </label>
 
-      <Field label="Day in week (1–7)" className="col-span-2">
-        <div className="flex gap-1">
-          {[1,2,3,4,5,6,7].map((n) => {
-            const active = n === consecutiveDay;
-            const tone = n >= 7 ? "ruby" : n === 6 ? "accent" : "primary";
+      <Field label="Day in week" className="col-span-2">
+        <div className="flex gap-1.5">
+          {[
+            { value: 1, label: "Std" },
+            { value: 6, label: "6th" },
+            { value: 7, label: "7th" }
+          ].map((opt) => {
+            const active = opt.value === consecutiveDay;
+            const tone = opt.value === 7 ? "ruby" : opt.value === 6 ? "orange" : "primary";
             return (
-              <button key={n} type="button" onClick={() => setConsecutiveDay(n)} aria-pressed={active}
-                className={`flex-1 py-1.5 rounded-md text-xs font-mono border transition-colors ${
+              <button key={opt.value} type="button" onClick={() => setConsecutiveDay(opt.value)} aria-pressed={active}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest border transition-colors ${
                   active
                     ? tone === "ruby"
                       ? "bg-ruby text-background border-ruby"
-                      : tone === "accent"
-                      ? "bg-accent text-background border-accent"
+                      : tone === "orange"
+                      ? "bg-orange-500 text-white border-orange-500"
                       : "bg-primary text-primary-foreground border-primary"
                     : "bg-obsidian text-muted-foreground border-border hover:text-foreground"
                 }`}>
-                {n}
+                {opt.label}
               </button>
             );
           })}
         </div>
         <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono mt-1">6th day = 1.5×, 7th day = 2× (BECTU)</p>
       </Field>
+
+      <div className="col-span-2 space-y-3 pt-2">
+        <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-0.5">Expenses</label>
+          <Button type="button" variant="outlineGlass" size="sm" onClick={addExpense} className="h-6 text-[9px] px-2 gap-1 py-0">
+            <Plus className="size-2.5" /> Add
+          </Button>
+        </div>
+        {expenses.length > 0 ? (
+          <div className="space-y-2">
+            {expenses.map((exp, i) => (
+              <div key={exp.id} className="flex items-center gap-2 bg-obsidian/50 p-2 rounded-md border border-border">
+                <input
+                  value={exp.description}
+                  onChange={e => updateExpense(exp.id, "description", e.target.value)}
+                  placeholder="Desc"
+                  className="w-full bg-transparent text-xs text-foreground focus:outline-none placeholder:text-muted-foreground flex-1 min-w-[50px]"
+                />
+                <div className="w-20 relative shrink-0">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">£</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={exp.amount || ""}
+                    onChange={e => updateExpense(exp.id, "amount", parseFloat(e.target.value) || 0)}
+                    className="w-full bg-carbon border border-border rounded-sm py-1 pr-1 pl-5 text-xs text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 text-right"
+                  />
+                </div>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeExpense(exp.id)} className="size-6 text-muted-foreground hover:text-red-500 shrink-0">
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[9px] text-muted-foreground px-0.5 italic">No expenses.</p>
+        )}
+      </div>
 
       <div className="col-span-2 flex gap-2 pt-1">
         <Button type="submit" variant="volt" size="sm" className="flex-1">Save changes</Button>
