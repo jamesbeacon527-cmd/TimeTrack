@@ -239,6 +239,7 @@ export type Totals = {
   perDiems: number;
   perDiemTotal: number;
   expensesTotal: number;
+  kitRental: number;
   subtotal: number;
   vat: number;
   grand: number;
@@ -248,7 +249,7 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
   const acc: Totals = {
     days: entries.length,
     basicHours: 0, preCallHours: 0, ot15Hours: 0, ot2Hours: 0, travelHours: 0,
-    perDiems: 0, perDiemTotal: 0, expensesTotal: 0,
+    perDiems: 0, perDiemTotal: 0, expensesTotal: 0, kitRental: 0,
     subtotal: 0, vat: 0, grand: 0,
   };
   for (const e of entries) {
@@ -259,6 +260,7 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
     acc.ot2Hours += b.ot2;
     acc.travelHours += b.travelHours;
     acc.expensesTotal += b.expensesTotal;
+    acc.kitRental += b.kitRental;
     acc.subtotal += b.total;
     if (e.perDiem) {
       acc.perDiems += 1;

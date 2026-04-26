@@ -21,7 +21,7 @@ type CalView = "week" | "month";
 
 const Index = () => {
   const {
-    projects, active, setActive, createProject, renameProject, setCrewRole, deleteProject, duplicateProject,
+    projects, active, setActive, createProject, renameProject, setCrewRole, toggleArchive, deleteProject, duplicateProject,
     entries, addEntry, updateEntry, removeEntry, rates, setRates, project, setProject, crewRole, setRole, isLoading,
   } = useProjects();
 
@@ -54,7 +54,7 @@ const Index = () => {
   return (
     <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12">
-        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0">
+        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
               <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
@@ -87,6 +87,7 @@ const Index = () => {
                   onCreate={createProject}
                   onRename={renameProject}
                   onDuplicate={duplicateProject}
+                  onToggleArchive={toggleArchive}
                   onDelete={deleteProject}
                 />
               </div>
@@ -135,6 +136,7 @@ const Index = () => {
               onDelete={deleteProject}
               onDuplicate={duplicateProject}
               onRename={renameProject}
+              onToggleArchive={toggleArchive}
             />
           ) : view === "setup" ? (
             <ProjectSetup 
@@ -215,12 +217,12 @@ const Index = () => {
                     </Panel>
                   )}
 
-                  <PanelResizeHandle className="w-2 group relative transition-all active:w-3">
+                  <PanelResizeHandle className="w-2 group relative transition-all active:w-3 print:hidden">
                     <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
                   </PanelResizeHandle>
 
-                  <Panel id="side-pane" order={3} defaultSize={30} minSize={25}>
-                    <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar">
+                  <Panel id="side-pane" order={3} defaultSize={30} minSize={25} className="print:hidden">
+                    <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar print:hidden">
                       <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
                         <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
                           {showRates ? "Project Settings" : "Production Summary"}
@@ -290,7 +292,7 @@ const Index = () => {
                 )}
 
                 {/* Always show summary on mobile at bottom of view unless rates is open */}
-                <div className="space-y-4 pb-12">
+                <div className="space-y-4 pb-12 print:hidden">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
                       {showRates ? "Project Settings" : "Performance Summary"}
@@ -307,7 +309,7 @@ const Index = () => {
           )}
         </main>
 
-        <footer className="py-12 flex flex-col sm:flex-row justify-between items-center gap-6 text-[11px] font-mono uppercase tracking-[0.3em] text-muted-foreground border-t border-border/80 shrink-0">
+        <footer className="py-12 flex flex-col sm:flex-row justify-between items-center gap-6 text-[11px] font-mono uppercase tracking-[0.3em] text-muted-foreground border-t border-border/80 shrink-0 print:hidden">
           <div className="font-medium">© TimeTrack — {new Date().getFullYear()} UK Crew Hours</div>
         </footer>
       </div>

@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface FirebaseContextType {
   user: User | null;
-  userData: any | null;
+  userData: Record<string, unknown> | null;
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -15,7 +15,7 @@ const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any | null>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

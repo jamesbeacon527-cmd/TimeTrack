@@ -1,4 +1,5 @@
-import { Plus, Clock, FileText, MoreVertical, Trash2, Copy, Edit3, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Plus, Clock, FileText, MoreVertical, Trash2, Copy, Edit3, ExternalLink, Archive, ArchiveRestore } from "lucide-react";
 import type { Project } from "@/hooks/useProjects";
 import { totals, fmtGBP } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
@@ -16,20 +17,42 @@ type Props = {
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onRename: (id: string, name: string) => void;
+  onToggleArchive: (id: string, archive: boolean) => void;
 };
 
-export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDuplicate, onRename }: Props) => {
+export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDuplicate, onRename, onToggleArchive }: Props) => {
+  const [showArchived, setShowArchived] = useState(false);
+  const filteredProjects = projects.filter(p => showArchived ? p.archived : !p.archived);
+
   return (
     <div className="space-y-12 pb-20 px-1 md:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-light tracking-tight text-foreground">Productions</h2>
-          <p className="text-sm text-muted-foreground mt-1">Manage your active production timecards and summaries.</p>
+          <h2 className="text-3xl font-light tracking-tight text-foreground">{showArchived ? 'Archived' : 'Productions'}</h2>
+          <p className="text-sm text-muted-foreground mt-1">Manage your {showArchived ? 'past' : 'active'} production timecards and summaries.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outlineGlass"
+            onClick={() => setShowArchived(!showArchived)}
+            className="rounded-xl px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {showArchived ? "Show Active" : "Show Archive"}
+          </Button>
+          {!showArchived && (
+            <Button 
+              onClick={onCreate}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5"
+            >
+              <Plus className="size-4 mr-2" />
+              New Production
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((p) => {
+        {filteredProjects.map((p) => {
           const t = totals(p.entries, p.rates);
           const lastEntry = p.entries[0]?.date;
           
@@ -87,6 +110,13 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
                     >
                       <Copy className="size-4 mr-2" /> Duplicate
                     </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={() => onToggleArchive(p.id, !p.archived)}
+                    >
+                      {p.archived ? <ArchiveRestore className="size-4 mr-2" /> : <Archive className="size-4 mr-2" />}
+                      {p.archived ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
                     <div className="h-px bg-border my-1" />
                     <DropdownMenuItem 
                       className="text-ruby focus:text-ruby cursor-pointer"
@@ -136,19 +166,28 @@ export const ProjectDashboard = ({ projects, onSelect, onCreate, onDelete, onDup
           );
         })}
 
-        <button 
-          onClick={onCreate}
-          className="rounded-3xl border-2 border-dashed border-border/40 p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-transparent hover:bg-primary/5 min-h-[260px]"
-        >
-          <div className="size-12 rounded-full bg-carbon flex items-center justify-center border border-border">
-            <Plus className="size-6" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium">Add Production</p>
-            <p className="text-[10px] uppercase tracking-widest mt-1">Start tracking another set</p>
-          </div>
-        </button>
+        {!showArchived && (
+          <button 
+            onClick={onCreate}
+            className="rounded-3xl border-2 border-dashed border-border/40 p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-transparent hover:bg-primary/5 min-h-[260px]"
+          >
+            <div className="size-12 rounded-full bg-carbon flex items-center justify-center border border-border">
+              <Plus className="size-6" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium">Add Production</p>
+              <p className="text-[10px] uppercase tracking-widest mt-1">Start tracking another set</p>
+            </div>
+          </button>
+        )}
       </div>
+
+      {filteredProjects.length === 0 && showArchived && (
+        <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground bg-carbon/20 rounded-3xl border border-dashed border-border/40">
+          <Archive className="size-12 mb-4 opacity-20" />
+          <p className="text-sm">No archived productions found.</p>
+        </div>
+      )}
     </div>
   );
 };

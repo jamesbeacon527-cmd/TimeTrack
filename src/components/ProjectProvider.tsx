@@ -18,6 +18,7 @@ export type Project = {
   id: string;
   name: string;
   crewRole?: string;
+  archived?: boolean;
   createdAt: string;
   rates: RateConfig;
   entries: DayEntry[];
@@ -39,6 +40,7 @@ type ProjectContextType = {
   createProject: (name: string, crewRole?: string, initialRates?: RateConfig) => Promise<void>;
   renameProject: (id: string, name: string) => Promise<void>;
   setCrewRole: (id: string, role: string) => Promise<void>;
+  toggleArchive: (id: string, archive: boolean) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<void>;
   entries: DayEntry[];
@@ -390,6 +392,26 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const toggleArchive = async (id: string, archive: boolean) => {
+    setState(s => ({
+      ...s,
+      projects: s.projects.map(p => p.id === id ? { ...p, archived: archive } : p)
+    }));
+    if (user) {
+      setSyncing(true);
+      try {
+        await setDoc(doc(db, "users", user.uid, "projects", id), {
+          archived: archive,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        if (err instanceof Error) handleFirestoreError(err, 'update', `projects/${id}`);
+      } finally {
+        setSyncing(false);
+      }
+    }
+  };
+
   const deleteProject = async (id: string) => {
     setState(s => {
       const remaining = s.projects.filter(p => p.id !== id);
@@ -532,6 +554,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     createProject,
     renameProject,
     setCrewRole,
+    toggleArchive,
     deleteProject,
     duplicateProject,
     entries: active.entries,

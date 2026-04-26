@@ -2,6 +2,9 @@ import { useMemo } from "react";
 import type { DayEntry, RateConfig } from "@/lib/calc";
 import { DAY_TYPE_LABELS, breakdown, fmtGBP, totals } from "@/lib/calc";
 import { DayTimeline } from "@/components/DayTimeline";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   entries: DayEntry[];
@@ -10,6 +13,21 @@ type Props = {
 };
 
 export const Invoice = ({ entries, rates, projectName }: Props) => {
+  const handlePrint = () => {
+    if (window.self !== window.top) {
+      toast("Please open in a new tab", {
+        description: "To print or save as PDF, open the app in a new tab (using the button in the top right), then click Print again or use Cmd/Ctrl+P.",
+        duration: 8000,
+      });
+    }
+    
+    try {
+      window.print();
+    } catch (e) {
+      console.error("Print blocked:", e);
+    }
+  };
+
   const sorted = useMemo(() => {
     return [...entries].sort((a, b) => a.date.localeCompare(b.date));
   }, [entries]);
@@ -17,7 +35,16 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
   const summary = useMemo(() => totals(entries, rates), [entries, rates]);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
+      <div className="flex justify-end print:hidden">
+        <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+          <Printer className="size-4" />
+          Print / PDF
+        </Button>
+      </div>
+
+      <div className="space-y-12 bg-background p-4 md:p-8 rounded-lg print:bg-white print:text-black print:p-0 print:m-0" id="invoice-content">
+
       <div className="flex flex-col md:flex-row justify-between gap-6 md:gap-8 border-b border-border pb-8 md:pb-10">
         <div className="space-y-4">
           <h2 className="text-2xl md:text-3xl font-light tracking-tight text-foreground uppercase">
@@ -89,6 +116,18 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
                   {e.notes && (
                     <p className="text-xs text-muted-foreground italic border-l-2 border-primary/30 pl-3">"{e.notes}"</p>
                   )}
+
+                  {e.expenses && e.expenses.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-[9px] font-mono uppercase text-muted-foreground tracking-wider mb-1">Expenses</p>
+                      {e.expenses.map((exp, i) => (
+                        <div key={i} className="flex justify-between items-center text-xs text-foreground/80 border-b border-border/20 pb-1 w-full max-w-sm">
+                          <span>{exp.description || 'Expense'}</span>
+                          <span className="font-mono text-primary">{fmtGBP(exp.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -112,6 +151,12 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
               <span className="text-muted-foreground uppercase text-[10px]">Per Diems ({summary.perDiems})</span>
               <span className="text-foreground">{fmtGBP(summary.perDiemTotal)}</span>
             </div>
+            {summary.kitRental > 0 && (
+              <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
+                <span className="text-muted-foreground uppercase text-[10px]">Kit Rental</span>
+                <span className="text-foreground">{fmtGBP(summary.kitRental)}</span>
+              </div>
+            )}
             {summary.expensesTotal > 0 && (
               <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
                 <span className="text-muted-foreground uppercase text-[10px]">Expenses</span>
@@ -138,6 +183,7 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
             </div>
           </dl>
         </div>
+      </div>
       </div>
     </div>
   );
