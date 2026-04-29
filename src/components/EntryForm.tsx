@@ -212,69 +212,103 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
       <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors" />
+          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
       </Field>
       <Field label="Unit Location">
         <div className="space-y-1">
-          <input 
-            value={location} 
-            onChange={(e) => setLocation(e.target.value)} 
-            onClick={(e) => {
-              try {
-                if ('showPicker' in e.currentTarget) {
-                  (e.currentTarget as HTMLInputElement).showPicker();
-                }
-              } catch (err) {
-                console.debug("Picker not supported", err);
-              }
-            }}
-            maxLength={80}
-            list="recent-locations"
-            placeholder="Shepperton Studios, Stage 4"
-            className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors" 
-          />
-          <datalist id="recent-locations">
-            {recentLocations.map(loc => (
-              <option key={loc} value={loc} />
-            ))}
-          </datalist>
+          {recentLocations.length > 0 ? (
+            <div className="relative">
+              <select
+                value={recentLocations.includes(location) ? location : (location ? "OTHER_CUSTOM" : "")}
+                onChange={(e) => {
+                  if (e.target.value === "OTHER_CUSTOM") {
+                    setLocation(""); // Focus text input
+                  } else {
+                    setLocation(e.target.value);
+                  }
+                }}
+                className={`w-full bg-obsidian border ${!recentLocations.includes(location) && location !== "" ? "border-b-0 rounded-t-lg" : "rounded-lg"} border-border px-4 py-3 text-foreground appearance-none focus:outline-none focus:border-primary/60 transition-colors cursor-pointer`}
+              >
+                <option value="" disabled>Select a location...</option>
+                {recentLocations.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+                <option value="OTHER_CUSTOM">+ Type a new location</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          ) : null}
+          {(recentLocations.length === 0 || (!recentLocations.includes(location) && location !== "")) && (
+            <input 
+              value={location} 
+              onChange={(e) => setLocation(e.target.value)} 
+              maxLength={80}
+              placeholder="e.g. Shepperton Studios, Stage 4"
+              className={`w-full bg-obsidian/80 border border-border ${recentLocations.length > 0 ? "rounded-b-lg border-t-0" : "rounded-lg"} px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors`}
+              autoFocus={recentLocations.length > 0}
+            />
+          )}
         </div>
       </Field>
 
       {!isRest && !isTravel && (
         <>
           <Field label="Call Time">
-            <input value={call} onChange={(e) => handleCallChange(e.target.value)} placeholder="08:00"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60" />
+            <input type="time" value={call} onChange={(e) => handleCallChange(e.target.value)}
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
-            <input value={actualStart} onChange={(e) => setActualStart(formatTimeInput(e.target.value))} placeholder="08:00"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
+            <input type="time" value={actualStart} onChange={(e) => setActualStart(e.target.value)}
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
-            <input value={wrap} onChange={(e) => setWrap(formatTimeInput(e.target.value))} placeholder="20:45"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
+            <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
           <Field label="Actual Wrap">
-            <input value={actualWrap} onChange={(e) => setActualWrap(formatTimeInput(e.target.value))} placeholder="21:30"
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60" />
+            <input type="time" value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
+              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If ran late</p>
           </Field>
 
           <Field label="Meal (mins)">
-            <input type="number" min={0} max={240} value={basicHours === 10 ? 0 : mealMinutes}
-              disabled={basicHours === 10}
-              onChange={(e) => setMeal(Number(e.target.value) || 0)}
-              className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 disabled:opacity-40" />
+            <div className="relative">
+              <select 
+                value={basicHours === 10 ? 0 : mealMinutes}
+                disabled={basicHours === 10}
+                onChange={(e) => setMeal(Number(e.target.value))}
+                className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 disabled:opacity-40 cursor-pointer"
+              >
+                {[0, 15, 30, 45, 60, 75, 90, 105, 120].map(mins => (
+                  <option key={mins} value={mins}>{mins} mins</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
             {basicHours === 10 && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1 font-bold italic">Running Lunch</p>}
           </Field>
           <Field label="Travel (mins)">
-            <input type="number" min={0} max={600} value={travelMinutes}
-              onChange={(e) => setTravel(Number(e.target.value) || 0)}
-              className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60" />
+            <div className="relative">
+              <select
+                value={travelMinutes}
+                onChange={(e) => setTravel(Number(e.target.value))}
+                className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 cursor-pointer"
+              >
+                {Array.from({ length: 25 }, (_, i) => i * 15).map(mins => (
+                  <option key={mins} value={mins}>{mins} mins</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
           </Field>
         </>
       )}
@@ -369,17 +403,20 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
               <span className="text-xs text-foreground font-medium">Shooting OT <span className="text-muted-foreground md:inline hidden">— at 2×</span></span>
             </div>
             {shootingOT && (
-              <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
-                <input
-                  type="number"
-                  min={0}
-                  max={480}
-                  step={15}
+              <div className="flex items-center gap-2 relative" onClick={(e) => e.preventDefault()}>
+                <select
                   value={shootingOTMinutes}
-                  onChange={(e) => setShootingOTMinutes(Math.max(0, Number(e.target.value) || 0))}
+                  onChange={(e) => setShootingOTMinutes(Number(e.target.value))}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-20 bg-obsidian border border-border rounded-md px-2 py-1 text-sm text-foreground font-mono tabular-nums text-right focus:outline-none focus:border-ruby/60"
-                />
+                  className="w-24 bg-obsidian border border-border rounded-md pl-2 pr-6 py-1.5 text-sm text-foreground font-mono tabular-nums text-left appearance-none focus:outline-none focus:border-ruby/60 cursor-pointer"
+                >
+                  {Array.from({ length: 32 }, (_, i) => i * 15).map(mins => (
+                    <option key={mins} value={mins}>{mins}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2 inset-y-0 flex items-center text-muted-foreground">
+                  <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">mins</span>
               </div>
             )}

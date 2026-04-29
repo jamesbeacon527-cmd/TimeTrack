@@ -140,7 +140,7 @@ export const DayTimeline = ({ entry, rates }: Props) => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[9px] md:text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
         <span>{startLabel}</span>
         <span>{fmtHours(workedHours(entry))} h worked · {(totalMin / 60).toFixed(2)} h elapsed</span>
         <span>{wrapLabel}</span>

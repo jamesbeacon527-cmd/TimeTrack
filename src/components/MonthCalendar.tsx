@@ -142,12 +142,12 @@ export const MonthCalendar = ({ entries, rates, onSelectDay }: Props) => {
                 inMonth ? "bg-carbon/50" : "bg-obsidian/40"
               } ${outlineClass}`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-x-1">
                 <span className={`text-xs font-mono tabular-nums ${isToday ? "text-primary" : "text-foreground"}`}>
                   {d.getDate()}
                 </span>
                 {list.length > 0 && (
-                  <span className="text-[9px] font-mono text-accent tabular-nums">{fmtGBP(dayTotal).replace(".00", "")}</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-accent tabular-nums">{fmtGBP(dayTotal).replace(".00", "")}</span>
                 )}
               </div>
 

@@ -59,9 +59,9 @@ export const Summary = ({ entries, rates, project }: Props) => {
           <div className="flex justify-between items-end mb-8">
             <div>
               <span className="text-[10px] uppercase text-muted-foreground block mb-1">Accrued Charge ({t.days} days)</span>
-              <div className="text-5xl font-mono tracking-tighter text-foreground">
+              <div className="text-4xl md:text-5xl font-mono tracking-tighter text-foreground break-words sm:break-normal">
                 {fmtGBP(t.subtotal).split(".")[0]}
-                <span className="text-lg text-muted-foreground">.{(t.subtotal.toFixed(2).split(".")[1] || "00")}</span>
+                <span className="text-base md:text-lg text-muted-foreground">.{(t.subtotal.toFixed(2).split(".")[1] || "00")}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-2 font-mono">
                 + VAT {fmtGBP(t.vat)} = <span className="text-primary font-bold">{fmtGBP(t.grand)}</span>

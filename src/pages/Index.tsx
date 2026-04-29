@@ -52,7 +52,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
+    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-[env(safe-area-inset-top,1rem)] pb-[env(safe-area-inset-bottom,1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12">
         <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4">
@@ -105,10 +105,10 @@ const Index = () => {
                   type="button"
                   onClick={() => setView(item.id as View)}
                   aria-pressed={view === item.id}
-                  className={`flex items-center justify-center gap-1.5 px-2 md:px-4 py-1.5 rounded-md text-[9px] md:text-[10px] font-semibold uppercase tracking-widest transition-all flex-1 min-w-[65px] md:min-w-[100px] ${
+                  className={`flex items-center justify-center gap-1.5 px-3 md:px-4 py-2 rounded-md text-[10px] md:text-xs font-semibold uppercase tracking-widest transition-all flex-1 min-w-[70px] md:min-w-[100px] ${
                     view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-carbon-light/50"
                   }`}>
-                  <item.icon className="size-3 md:size-3.5 shrink-0" />
+                  <item.icon className="size-3.5 md:size-4 shrink-0" />
                   <span className="whitespace-nowrap md:hidden">{item.label}</span>
                   <span className="whitespace-nowrap hidden md:inline">{item.full}</span>
                 </button>
@@ -246,7 +246,7 @@ const Index = () => {
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Session Capture</h3>
                       </div>
-                      <div className="bg-carbon/40 rounded-3xl p-6 border border-border shadow-xl relative overflow-hidden">
+                      <div className="bg-carbon/40 rounded-3xl p-4 sm:p-6 border border-border shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-2xl -mr-12 -mt-12 rounded-full" aria-hidden />
                         <EntryForm
                           onSubmit={addEntry}

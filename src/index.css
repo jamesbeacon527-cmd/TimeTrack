@@ -117,10 +117,23 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent pull-to-refresh and elastic scrolling on mobile devices */
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    /* Remove tap highlight on mobile safari */
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
   }
