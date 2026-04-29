@@ -52,7 +52,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-[calc(env(safe-area-inset-top,1rem)+4rem)] pb-[env(safe-area-inset-bottom,1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full">
+    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-16 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-[100vw]">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12 min-w-0">
         <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden min-w-0">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4 min-w-0">
@@ -239,14 +239,14 @@ const Index = () => {
               </div>
 
               {/* Mobile Scrolling View */}
-              <div className="lg:hidden flex flex-col space-y-12">
+              <div className="lg:hidden flex flex-col space-y-12 w-full min-w-0">
                 {view === "capture" && (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-4 w-full min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Session Capture</h3>
                       </div>
-                      <div className="bg-carbon/40 rounded-3xl p-4 sm:p-6 border border-border shadow-xl relative overflow-hidden">
+                      <div className="bg-carbon/40 rounded-3xl p-4 sm:p-6 border border-border shadow-xl relative overflow-hidden w-full min-w-0">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-2xl -mr-12 -mt-12 rounded-full" aria-hidden />
                         <EntryForm
                           onSubmit={addEntry}

@@ -202,8 +202,8 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const isTravel = dayType === "travel";
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-6 relative z-10">
-      <Field label="Day Type" className="md:col-span-2">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-6 relative z-10 w-full min-w-0">
+      <Field label="Day Type" className="md:col-span-2 min-w-0">
         <div className="flex flex-wrap gap-2">
           {DAY_TYPES.map((t) => {
             const active = t === dayType;
@@ -228,7 +228,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
       <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
+          className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
       </Field>
       <Field label="Unit Location">
         <div className="space-y-1 relative">
@@ -271,7 +271,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 }} 
                 maxLength={80}
                 placeholder="e.g. Shepperton Studios, Stage 4"
-                className="w-full bg-obsidian/80 border border-border rounded-lg px-4 py-3 pr-10 text-foreground focus:outline-none focus:border-primary/60 transition-colors"
+                className="w-full min-w-0 bg-obsidian/80 border border-border rounded-lg px-4 py-3 pr-10 text-foreground focus:outline-none focus:border-primary/60 transition-colors"
                 autoFocus={isTypingLocation}
               />
               {recentLocations.length > 0 && (
@@ -295,22 +295,22 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         <>
           <Field label="Call Time">
             <input type="time" value={call} onChange={(e) => handleCallChange(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
             <input type="time" value={actualStart} onChange={(e) => setActualStart(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
             <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
           <Field label="Actual Wrap">
             <input type="time" value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If ran late</p>
           </Field>
 
@@ -476,7 +476,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 };
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
-  <div className={`space-y-2.5 ${className}`}>
+  <div className={`space-y-2.5 min-w-0 flex flex-col ${className}`}>
     <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">{label}</label>
     {children}
   </div>
