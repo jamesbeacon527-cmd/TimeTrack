@@ -52,10 +52,10 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-[env(safe-area-inset-top,1rem)] pb-[env(safe-area-inset-bottom,1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden">
-      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12">
-        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden">
-          <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4">
+    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-[calc(env(safe-area-inset-top,1rem)+4rem)] pb-[env(safe-area-inset-bottom,1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full">
+      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12 min-w-0">
+        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden min-w-0">
+          <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4 min-w-0">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
               <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
                 <img src="/logo.svg" alt="TimeTrack Logo" className="size-6 md:size-8" />

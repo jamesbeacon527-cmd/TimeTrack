@@ -40,6 +40,20 @@ const formatTimeInput = (val: string): string => {
   return val;
 };
 
+const formatMinsToTime = (mins: number) => {
+  if (isNaN(mins)) return "00:00";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+};
+
+const parseTimeToMins = (val: string) => {
+  if (!val) return 0;
+  const [h, m] = val.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return 0;
+  return (h * 60) + m;
+};
+
 export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = [], defaultShootingOT = false, defaultShootingOTMinutes = 60, basicHours = 10 }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState(today());
@@ -76,6 +90,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   const [shootingOTMinutes, setShootingOTMinutes] = useState<number>(defaultShootingOTMinutes);
   const [consecutiveDay, setConsecutiveDay] = useState<number>(1);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [isTypingLocation, setIsTypingLocation] = useState(false);
 
   const addExpense = () => {
     const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
@@ -175,6 +190,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       setShootingOTMinutes(defaultShootingOTMinutes);
       setConsecutiveDay(1);
       setExpenses([]);
+      setIsTypingLocation(false);
     } catch (err) {
       // Hook handles logging/toast
     } finally {
@@ -215,19 +231,20 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
       </Field>
       <Field label="Unit Location">
-        <div className="space-y-1">
-          {recentLocations.length > 0 ? (
+        <div className="space-y-1 relative">
+          {recentLocations.length > 0 && !isTypingLocation && (location === "" || recentLocations.includes(location)) ? (
             <div className="relative">
               <select
-                value={recentLocations.includes(location) ? location : (location ? "OTHER_CUSTOM" : "")}
+                value={location || ""}
                 onChange={(e) => {
                   if (e.target.value === "OTHER_CUSTOM") {
+                    setIsTypingLocation(true);
                     setLocation(""); // Focus text input
                   } else {
                     setLocation(e.target.value);
                   }
                 }}
-                className={`w-full bg-obsidian border ${!recentLocations.includes(location) && location !== "" ? "border-b-0 rounded-t-lg" : "rounded-lg"} border-border px-4 py-3 text-foreground appearance-none focus:outline-none focus:border-primary/60 transition-colors cursor-pointer`}
+                className="w-full bg-obsidian border rounded-lg border-border px-4 py-3 text-foreground appearance-none focus:outline-none focus:border-primary/60 transition-colors cursor-pointer"
               >
                 <option value="" disabled>Select a location...</option>
                 {recentLocations.map(loc => (
@@ -239,16 +256,37 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-          ) : null}
-          {(recentLocations.length === 0 || (!recentLocations.includes(location) && location !== "")) && (
-            <input 
-              value={location} 
-              onChange={(e) => setLocation(e.target.value)} 
-              maxLength={80}
-              placeholder="e.g. Shepperton Studios, Stage 4"
-              className={`w-full bg-obsidian/80 border border-border ${recentLocations.length > 0 ? "rounded-b-lg border-t-0" : "rounded-lg"} px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors`}
-              autoFocus={recentLocations.length > 0}
-            />
+          ) : (
+            <div className="relative">
+              <input 
+                value={location} 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                }} 
+                maxLength={80}
+                placeholder="e.g. Shepperton Studios, Stage 4"
+                className="w-full bg-obsidian/80 border border-border rounded-lg px-4 py-3 pr-10 text-foreground focus:outline-none focus:border-primary/60 transition-colors"
+                autoFocus={isTypingLocation}
+              />
+              {recentLocations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTypingLocation(false);
+                    setLocation("");
+                  }}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </Field>
@@ -282,14 +320,14 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 value={basicHours === 10 ? 0 : mealMinutes}
                 disabled={basicHours === 10}
                 onChange={(e) => setMeal(Number(e.target.value))}
-                className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 disabled:opacity-40 cursor-pointer"
+                className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 disabled:opacity-40 cursor-pointer"
               >
                 {[0, 15, 30, 45, 60, 75, 90, 105, 120].map(mins => (
                   <option key={mins} value={mins}>{mins} mins</option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
-                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 md:px-6 text-muted-foreground">
+                <svg className="size-5 md:size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
             {basicHours === 10 && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1 font-bold italic">Running Lunch</p>}
@@ -299,14 +337,14 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
               <select
                 value={travelMinutes}
                 onChange={(e) => setTravel(Number(e.target.value))}
-                className="w-full bg-obsidian/50 border border-border rounded-lg px-4 py-3 text-lg text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 cursor-pointer"
+                className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 cursor-pointer"
               >
                 {Array.from({ length: 25 }, (_, i) => i * 15).map(mins => (
                   <option key={mins} value={mins}>{mins} mins</option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
-                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 md:px-6 text-muted-foreground">
+                <svg className="size-5 md:size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
           </Field>
@@ -316,7 +354,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
       <Field label="Day in week" className="md:col-span-2">
         <div className="flex gap-2">
           {[
-            { value: 1, label: "Standard (1-5)" },
+            { value: 1, label: "Standard" },
             { value: 6, label: "6th Day" },
             { value: 7, label: "7th Day" }
           ].map((opt) => {
@@ -403,21 +441,21 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
               <span className="text-xs text-foreground font-medium">Shooting OT <span className="text-muted-foreground md:inline hidden">— at 2×</span></span>
             </div>
             {shootingOT && (
-              <div className="flex items-center gap-2 relative" onClick={(e) => e.preventDefault()}>
+              <div className="flex items-center gap-2 relative mt-2 md:mt-0" onClick={(e) => e.preventDefault()}>
                 <select
                   value={shootingOTMinutes}
                   onChange={(e) => setShootingOTMinutes(Number(e.target.value))}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-24 bg-obsidian border border-border rounded-md pl-2 pr-6 py-1.5 text-sm text-foreground font-mono tabular-nums text-left appearance-none focus:outline-none focus:border-ruby/60 cursor-pointer"
+                  className="w-32 bg-obsidian border border-border rounded-md pl-3 pr-8 py-2 text-sm text-foreground font-mono tabular-nums text-left appearance-none focus:outline-none focus:border-ruby/60 cursor-pointer"
                 >
                   {Array.from({ length: 32 }, (_, i) => i * 15).map(mins => (
                     <option key={mins} value={mins}>{mins}</option>
                   ))}
                 </select>
                 <div className="pointer-events-none absolute right-2 inset-y-0 flex items-center text-muted-foreground">
-                  <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">mins</span>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono ml-1">mins</span>
               </div>
             )}
           </label>
@@ -429,7 +467,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
         </Button>
         <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
-          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); }}>
+          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); setIsTypingLocation(false); }}>
           Reset Form
         </Button>
       </div>
