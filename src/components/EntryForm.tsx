@@ -228,7 +228,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
       <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
+          className="w-full shrink min-w-0 max-w-full box-border block bg-obsidian border border-border rounded-lg px-3 py-3 text-sm md:text-base text-foreground font-mono focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark] appearance-none" />
       </Field>
       <Field label="Unit Location">
         <div className="space-y-1 relative">
@@ -295,22 +295,22 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         <>
           <Field label="Call Time">
             <input type="time" value={call} onChange={(e) => handleCallChange(e.target.value)}
-              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 [color-scheme:dark]" />
+              className="w-full shrink min-w-0 max-w-full box-border block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-base md:text-xl text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 [color-scheme:dark] appearance-none" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
             <input type="time" value={actualStart} onChange={(e) => setActualStart(e.target.value)}
-              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 [color-scheme:dark]" />
+              className="w-full shrink min-w-0 max-w-full box-border block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-base md:text-xl text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 [color-scheme:dark] appearance-none" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
             <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
-              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
+              className="w-full shrink min-w-0 max-w-full box-border block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-base md:text-xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark] appearance-none" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
           <Field label="Actual Wrap">
             <input type="time" value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
-              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-lg sm:text-xl md:text-2xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark]" />
+              className="w-full shrink min-w-0 max-w-full box-border block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 md:py-4 text-base md:text-xl text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 [color-scheme:dark] appearance-none" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If ran late</p>
           </Field>
 
