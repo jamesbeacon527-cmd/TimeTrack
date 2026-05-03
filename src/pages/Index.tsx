@@ -52,7 +52,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground antialiased flex flex-col p-4 pt-[max(env(safe-area-inset-top),1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-[100vw]">
+    <div className="min-h-screen min-h-[100dvh] bg-background text-foreground antialiased flex flex-col p-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-full">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12 min-w-0">
         <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden min-w-0">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4 min-w-0">
