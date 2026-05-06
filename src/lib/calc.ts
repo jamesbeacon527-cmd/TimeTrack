@@ -57,9 +57,14 @@ export const DEFAULT_DAY_TYPE_RATES: DayTypeRates = {
 export type RateConfig = {
   dayRate: number;          // £ flat day rate; if > 0, used in place of basic-hours × hourly
   basicHours: number;       // contracted basic per day (BECTU: 10h on 5-day week, 11h on 6-day)
+  isRunningLunch: boolean;  // if true, meals are not deducted (Running Lunch)
   hourlyRate: number;       // £ hourly rate (used for OT and when day rate = 0)
   shootingOTMinutes: number; // minutes after basic paid at 2× when entry.shootingOT is on; remainder reverts to 1.5×
   shootingOTDefault: boolean; // default value for the per-entry shootingOT toggle
+  otMultiplier: number;     // e.g. 1.5 for basic OT
+  otFlatRate?: number;      // £ specific flat rate per hour of OT (overrides multiplier)
+  ot2Multiplier: number;    // e.g. 2.0 for shooting OT
+  ot2FlatRate?: number;     // £ specific flat rate per hour of shooting OT
   ot15Hours: number;        // legacy / kept for backwards compat — no longer drives the 2× window
   preCallRate: number;      // multiplier for time worked before call sheet call (BECTU: 1.5x typical)
   nightPremium: number;     // £ flat per night-shoot day
@@ -68,6 +73,7 @@ export type RateConfig = {
   perDiem: number;          // £ per-diem amount per claimed day (BECTU rec ~£45)
   vatRate: number;          // 0.20
   kitRentalPerDay?: number; // optional
+  dayRates?: Record<number, number>; // Exact day rates by basic hours (e.g., { 10: 563, 11: 678 })
   dayTypeRates: DayTypeRates;
   // BECTU framework — editable
   turnaroundHours: number;       // minimum rest between wrap and next call (BECTU: 11)
@@ -80,9 +86,12 @@ export type RateConfig = {
 export const DEFAULT_RATES: RateConfig = {
   dayRate: 0,
   basicHours: 10,
+  isRunningLunch: false,
   hourlyRate: 35,
   shootingOTMinutes: 60,
   shootingOTDefault: false,
+  otMultiplier: 1.5,
+  ot2Multiplier: 2.0,
   ot15Hours: 2,
   preCallRate: 1.5,
   nightPremium: 100,
@@ -114,8 +123,7 @@ export function workedHours(entry: DayEntry, rates?: RateConfig): number {
   if (end <= start) end += 24 * 60; // crossed midnight
   
   // Meal deduction
-  // Running lunch: If basic hours is 10, we ignore meal minutes as they are worked.
-  const isRunningLunch = rates?.basicHours === 10;
+  const isRunningLunch = rates?.isRunningLunch ?? (rates?.basicHours === 10);
   const meal = isRunningLunch ? 0 : (entry.mealMinutes || 0);
   
   const worked = end - start - meal;
@@ -216,8 +224,12 @@ export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
   const preCallPay = preCall * rates.hourlyRate * rates.preCallRate * stackedMultiplier;
 
   const basicPay = rawBasicPay * stackedMultiplier;
-  const ot15Pay = ot15 * rates.hourlyRate * 1.5 * stackedMultiplier;
-  const ot2Pay = ot2 * rates.hourlyRate * 2 * stackedMultiplier;
+
+  const ot1Rate = rates.otFlatRate ?? (rates.hourlyRate * (rates.otMultiplier ?? 1.5));
+  const ot2Rate = rates.ot2FlatRate ?? (rates.hourlyRate * (rates.ot2Multiplier ?? 2.0));
+
+  const ot15Pay = ot15 * ot1Rate * stackedMultiplier;
+  const ot2Pay = ot2 * ot2Rate * stackedMultiplier;
   const travelPay = travelHours * rates.hourlyRate * stackedMultiplier;
   const nightPay = entry.isNight ? rates.nightPremium : 0;
   const perDiemPay = entry.perDiem ? rates.perDiem : 0;

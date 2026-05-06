@@ -98,6 +98,7 @@ function mergeRates(stored: Partial<RateConfig> | undefined): RateConfig {
   return {
     ...DEFAULT_RATES,
     ...s,
+    isRunningLunch: s.isRunningLunch ?? (s.basicHours === 10),
     dayTypeRates: { ...DEFAULT_RATES.dayTypeRates, ...(s.dayTypeRates || {}) },
   };
 }

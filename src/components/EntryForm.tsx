@@ -11,7 +11,8 @@ type Props = {
   recentLocations?: string[];
   defaultShootingOT?: boolean; 
   defaultShootingOTMinutes?: number; 
-  basicHours?: number 
+  basicHours?: number;
+  isRunningLunch?: boolean;
 };
 
 const today = () => fmtDate(new Date());
@@ -54,7 +55,7 @@ const parseTimeToMins = (val: string) => {
   return (h * 60) + m;
 };
 
-export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = [], defaultShootingOT = false, defaultShootingOTMinutes = 60, basicHours = 10 }: Props) => {
+export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = [], defaultShootingOT = false, defaultShootingOTMinutes = 60, basicHours = 10, isRunningLunch = false }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState(today());
   const [dayType, setDayType] = useState<DayType>("shoot");
@@ -82,7 +83,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
     setCall(fmt);
     if (/^\d{2}:\d{2}$/.test(fmt)) setWrap(addHoursToTime(fmt, basicHours));
   };
-  const [mealMinutes, setMeal] = useState(basicHours === 10 ? 0 : 60);
+  const [mealMinutes, setMeal] = useState(isRunningLunch ? 0 : 60);
   const [travelMinutes, setTravel] = useState(0);
   const [isNight, setNight] = useState(false);
   const [perDiem, setPerDiem] = useState(false);
@@ -160,7 +161,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         location: location.trim(), 
         call, 
         wrap, 
-        mealMinutes: basicHours === 10 ? 0 : Math.max(0, mealMinutes), 
+        mealMinutes: isRunningLunch ? 0 : Math.max(0, mealMinutes), 
         travelMinutes: Math.max(0, travelMinutes), 
         isNight, 
         perDiem, 
@@ -317,8 +318,8 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           <Field label="Meal (mins)">
             <div className="relative">
               <select 
-                value={basicHours === 10 ? 0 : mealMinutes}
-                disabled={basicHours === 10}
+                value={isRunningLunch ? 0 : mealMinutes}
+                disabled={isRunningLunch}
                 onChange={(e) => setMeal(Number(e.target.value))}
                 className="w-full bg-obsidian border border-border rounded-lg px-4 py-3 md:py-4 text-xl md:text-2xl text-foreground font-mono tabular-nums appearance-none focus:outline-none focus:border-primary/60 disabled:opacity-40 cursor-pointer"
               >
@@ -330,7 +331,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 <svg className="size-5 md:size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-            {basicHours === 10 && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1 font-bold italic">Running Lunch</p>}
+            {isRunningLunch && <p className="text-[9px] uppercase tracking-widest text-primary font-mono mt-1 font-bold italic">Running Lunch</p>}
           </Field>
           <Field label="Travel (mins)">
             <div className="relative">
@@ -467,7 +468,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
         </Button>
         <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
-          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(basicHours === 10 ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); setIsTypingLocation(false); }}>
+          onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(isRunningLunch ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); setIsTypingLocation(false); }}>
           Reset Form
         </Button>
       </div>

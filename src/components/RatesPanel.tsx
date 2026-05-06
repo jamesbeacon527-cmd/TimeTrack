@@ -75,13 +75,45 @@ export const RatesPanel = ({ rates, onChange, project, onProject, role, onRole }
             }} step={5} />
             <NumField label="Hourly £" value={rates.hourlyRate} onChange={(v) => set("hourlyRate", v)} step={0.5} />
             <div className="space-y-1">
-              <NumField label="Basic hrs/day" value={rates.basicHours} onChange={(v) => {
-                const basic = Math.max(1, v); // Cannot have 0 or less basic hours
-                const h = rates.dayRate / basic;
-                onChange({ ...rates, basicHours: basic, hourlyRate: rates.dayRate > 0 ? Number(h.toFixed(2)) : rates.hourlyRate });
-              }} />
-              {rates.basicHours === 10 && <p className="text-[9px] uppercase text-primary font-mono px-1">Enables 10h Running Lunch</p>}
-              {rates.basicHours === 11 && <p className="text-[9px] uppercase text-muted-foreground font-mono px-1">Standard 11+1 Day</p>}
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-1">Basic hrs/day</label>
+              <select 
+                value={
+                  rates.basicHours === 10 && rates.isRunningLunch ? "10-running" :
+                  rates.basicHours === 10 && !rates.isRunningLunch ? "10-standard" :
+                  rates.basicHours === 11 ? "11-standard" :
+                  "custom"
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  let basicHours = rates.basicHours;
+                  let isRunningLunch = rates.isRunningLunch;
+                  
+                  if (val === "10-running") {
+                    basicHours = 10;
+                    isRunningLunch = true;
+                  } else if (val === "10-standard") {
+                    basicHours = 10;
+                    isRunningLunch = false;
+                  } else if (val === "11-standard") {
+                    basicHours = 11;
+                    isRunningLunch = false;
+                  }
+                  
+                  let newDayRate = rates.dayRate;
+                  if (rates.dayRates && rates.dayRates[basicHours]) {
+                    newDayRate = rates.dayRates[basicHours];
+                  }
+                  
+                  const h = newDayRate > 0 ? newDayRate / basicHours : rates.hourlyRate;
+                  onChange({ ...rates, basicHours, isRunningLunch, dayRate: newDayRate, hourlyRate: newDayRate > 0 ? Number(h.toFixed(2)) : rates.hourlyRate });
+                }}
+                className="w-full bg-obsidian border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary/60 transition-colors"
+              >
+                <option value="10-running">10h (Running Lunch)</option>
+                <option value="10-standard">10h (10+1h lunch)</option>
+                <option value="11-standard">11h (11+1h lunch)</option>
+                {![10, 11].includes(rates.basicHours) && <option value="custom">{rates.basicHours}h (Custom)</option>}
+              </select>
             </div>
             <NumField label="Pre-call ×" value={rates.preCallRate} onChange={(v) => set("preCallRate", v)} step={0.1} />
             <NumField label="Night premium £" value={rates.nightPremium} onChange={(v) => set("nightPremium", v)} />

@@ -183,6 +183,7 @@ const Index = () => {
                               defaultShootingOT={!!rates.shootingOTDefault}
                               defaultShootingOTMinutes={rates.shootingOTMinutes}
                               basicHours={rates.basicHours}
+                              isRunningLunch={rates.isRunningLunch}
                             />
                           </div>
                         </div>
@@ -255,6 +256,7 @@ const Index = () => {
                           defaultShootingOT={!!rates.shootingOTDefault}
                           defaultShootingOTMinutes={rates.shootingOTMinutes}
                           basicHours={rates.basicHours}
+                          isRunningLunch={rates.isRunningLunch}
                         />
                       </div>
                     </div>
