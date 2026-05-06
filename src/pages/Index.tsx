@@ -93,7 +93,7 @@ const Index = () => {
               </div>
             )}
 
-            <div className="fixed bottom-2 left-2 right-2 z-[100] sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto flex bg-carbon/95 sm:bg-carbon backdrop-blur-xl sm:backdrop-blur-none border border-border sm:border shadow-2xl sm:shadow-none rounded-2xl sm:rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
+            <div className="fixed bottom-2 left-2 right-2 z-[100] sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto flex bg-carbon/95 sm:bg-carbon backdrop-blur-xl sm:backdrop-blur-none border border-border sm:border shadow-2xl sm:shadow-none rounded-[24px] sm:rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
               {[
                 { id: "home", icon: LayoutGrid, label: "Dash", full: "Dashboard" },
                 { id: "capture", icon: ClipboardList, label: "Log", full: "Capture Log" },
@@ -105,10 +105,10 @@ const Index = () => {
                   type="button"
                   onClick={() => setView(item.id as View)}
                   aria-pressed={view === item.id}
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3 md:px-4 py-2 sm:py-2 rounded-[10px] sm:rounded-md text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-widest transition-all flex-1 min-w-[60px] sm:min-w-[70px] md:min-w-[100px] ${
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-[20px] sm:rounded-md text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-widest transition-all flex-1 min-w-[60px] sm:min-w-[70px] md:min-w-[100px] ${
                     view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-carbon-light/50"
                   }`}>
-                  <item.icon className="size-[18px] sm:size-3.5 md:size-4 shrink-0" />
+                  <item.icon className="size-4 sm:size-3.5 md:size-4 shrink-0" />
                   <span className="whitespace-nowrap sm:hidden">{item.label}</span>
                   <span className="whitespace-nowrap hidden sm:inline md:hidden">{item.label}</span>
                   <span className="whitespace-nowrap hidden md:inline">{item.full}</span>
