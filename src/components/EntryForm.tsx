@@ -229,7 +229,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
       <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full min-w-0 block bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
+          className="w-full max-w-full min-w-0 m-0 block appearance-none bg-obsidian border border-border rounded-lg px-3 py-3 text-center sm:text-left text-foreground focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
       </Field>
       <Field label="Unit Location">
         <div className="space-y-1 relative">
@@ -296,22 +296,22 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         <>
           <Field label="Call Time">
             <input type="time" value={call} onChange={(e) => handleCallChange(e.target.value)}
-              className="w-full max-w-full block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 transition-colors [color-scheme:dark]" />
+              className="w-full max-w-full min-w-0 m-0 block appearance-none bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
             <input type="time" value={actualStart} onChange={(e) => setActualStart(e.target.value)}
-              className="w-full max-w-full block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
+              className="w-full max-w-full min-w-0 m-0 block appearance-none bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
             <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
-              className="w-full max-w-full block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
+              className="w-full max-w-full min-w-0 m-0 block appearance-none bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
           <Field label="Actual Wrap">
             <input type="time" value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
-              className="w-full max-w-full block bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
+              className="w-full max-w-full min-w-0 m-0 block appearance-none bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If ran late</p>
           </Field>
 
