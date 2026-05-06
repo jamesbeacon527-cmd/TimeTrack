@@ -313,7 +313,7 @@ const Index = () => {
       </div>
 
       <Dialog open={showRates} onOpenChange={setShowRates}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-carbon border-border">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-carbon border-border sm:rounded-3xl rounded-[28px]" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-lg font-medium text-foreground">Project Settings</DialogTitle>
           </DialogHeader>
