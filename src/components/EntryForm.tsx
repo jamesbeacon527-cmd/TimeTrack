@@ -205,7 +205,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
   return (
     <form onSubmit={submit} className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-6 relative z-10 w-full min-w-0">
       <Field label="Day Type" className="md:col-span-2 min-w-0">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {DAY_TYPES.map((t) => {
             const active = t === dayType;
             return (
@@ -214,7 +214,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                 type="button"
                 onClick={() => setDayType(t)}
                 aria-pressed={active}
-                className={`px-3 py-2 rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-widest border transition-colors ${
+                className={`flex-1 min-w-[70px] px-2 py-2 rounded-lg text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider md:tracking-widest border transition-colors text-center ${
                   active
                     ? "bg-primary text-primary-foreground border-primary shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
                     : "bg-obsidian text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
@@ -302,7 +302,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           <Field label="Actual Start">
             <input type="time" value={actualStart} onChange={(e) => setActualStart(e.target.value)}
               className="w-full min-w-0 block bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If pre-call</p>
+            <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
             <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
@@ -312,7 +312,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
           <Field label="Actual Wrap">
             <input type="time" value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
               className="w-full min-w-0 block bg-obsidian border border-border rounded-lg px-4 py-3 text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono italic">If ran late</p>
+            <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If ran late</p>
           </Field>
 
           <Field label="Meal (mins)">
@@ -463,11 +463,11 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         )}
       </div>
 
-      <div className="md:col-span-2 flex flex-col md:flex-row gap-3 pt-2">
-        <Button type="submit" variant="volt" disabled={isSubmitting} className="flex-[2] h-12 md:h-14 text-[10px] md:text-sm uppercase tracking-widest">
+      <div className="md:col-span-2 flex flex-row gap-2 sm:gap-3 pt-2">
+        <Button type="submit" variant="volt" disabled={isSubmitting} className="flex-[2] h-14 md:h-16 text-[11px] md:text-sm uppercase tracking-widest leading-none">
           {isSubmitting ? "Capturing..." : "CAPTURE ENTRY"}
         </Button>
-        <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-12 md:h-14 text-[10px] md:text-xs uppercase tracking-widest"
+        <Button type="reset" variant="outlineGlass" disabled={isSubmitting} className="flex-1 h-14 md:h-16 text-[9px] md:text-xs uppercase tracking-widest leading-none whitespace-normal py-2"
           onClick={() => { setLocation(""); setCall("08:00"); setActualStart(""); setWrap(addHoursToTime("08:00", basicHours)); setActualWrap(""); setMeal(isRunningLunch ? 0 : 60); setTravel(0); setNight(false); setPerDiem(false); setShootingOT(defaultShootingOT); setShootingOTMinutes(defaultShootingOTMinutes); setConsecutiveDay(1); setExpenses([]); setIsTypingLocation(false); }}>
           Reset Form
         </Button>

@@ -13,8 +13,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/UserMenu";
-import { CalendarRange, ClipboardList, FileText, Settings2, X, LayoutGrid } from "lucide-react";
+import { CalendarRange, ClipboardList, FileText, Settings, X, LayoutGrid } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type View = "home" | "setup" | "capture" | "calendar" | "invoice";
 type CalView = "week" | "month";
@@ -66,8 +67,8 @@ const Index = () => {
               <UserMenu />
               <ThemeToggle />
               {view !== "home" && (
-                <Button variant="outlineGlass" size="icon" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings" className="h-8 w-8">
-                  {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
+                <Button variant="outlineGlass" size="icon" onClick={() => setShowRates(true)} aria-label="Project settings" className="h-8 w-8">
+                  <Settings className="size-4" />
                 </Button>
               )}
             </div>
@@ -110,15 +111,15 @@ const Index = () => {
                   }`}>
                   <item.icon className="size-4 sm:size-3.5 md:size-4 shrink-0" />
                   <span className="whitespace-nowrap sm:hidden">{item.label}</span>
-                  <span className="whitespace-nowrap hidden sm:inline md:hidden">{item.label}</span>
-                  <span className="whitespace-nowrap hidden md:inline">{item.full}</span>
+                  <span className="whitespace-nowrap hidden sm:inline lg:hidden">{item.label}</span>
+                  <span className="whitespace-nowrap hidden lg:inline">{item.full}</span>
                 </button>
               ))}
             </div>
             {view !== "home" && (
               <div className="hidden lg:block">
-                <Button variant="outlineGlass" size="default" onClick={() => setShowRates((v) => !v)} aria-label="Toggle settings">
-                  {showRates ? <X className="size-4" /> : <Settings2 className="size-4" />}
+                <Button variant="outlineGlass" size="default" onClick={() => setShowRates(true)} aria-label="Project settings">
+                  <Settings className="size-4" />
                 </Button>
               </div>
             )}
@@ -227,14 +228,10 @@ const Index = () => {
                     <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar print:hidden">
                       <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
                         <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
-                          {showRates ? "Project Settings" : "Production Summary"}
+                          Production Summary
                         </h3>
                       </div>
-                      {showRates ? (
-                        <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
-                      ) : (
-                        <Summary entries={entries} rates={rates} project={project} />
-                      )}
+                      <Summary entries={entries} rates={rates} project={project} />
                     </div>
                   </Panel>
                 </PanelGroup>
@@ -294,19 +291,15 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Show summary on mobile at bottom of view for dashboard or invoice, or when rates are open */}
-                {(view === "home" || view === "invoice" || showRates) && (
+                {/* Show summary on mobile at bottom of view for dashboard or invoice */}
+                {(view === "home" || view === "invoice") && (
                   <div className="space-y-4 pb-12 print:hidden">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
-                        {showRates ? "Project Settings" : "Performance Summary"}
+                        Performance Summary
                       </h3>
                     </div>
-                    {showRates ? (
-                      <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
-                    ) : (
-                      <Summary entries={entries} rates={rates} project={project} />
-                    )}
+                    <Summary entries={entries} rates={rates} project={project} />
                   </div>
                 )}
               </div>
@@ -318,6 +311,17 @@ const Index = () => {
           <div className="font-medium">© TimeTrack — {new Date().getFullYear()} UK Crew Hours</div>
         </footer>
       </div>
+
+      <Dialog open={showRates} onOpenChange={setShowRates}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-carbon border-border">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-medium text-foreground">Project Settings</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
