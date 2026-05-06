@@ -52,9 +52,9 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background text-foreground antialiased flex flex-col p-4 pb-28 pt-[calc(env(safe-area-inset-top,0px)+1rem)] sm:pb-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-full">
-      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12 min-w-0">
-        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden min-w-0">
+    <div className="min-h-screen min-h-[100dvh] bg-background text-foreground antialiased flex flex-col p-4 pb-28 pt-[calc(env(safe-area-inset-top,0px)+1rem)] sm:pb-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-8 transition-colors duration-300 overflow-x-hidden w-full max-w-full">
+      <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-6 md:space-y-8 min-w-0">
+        <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-5 lg:gap-8 border-b border-border/60 pb-5 md:pb-8 shrink-0 print:hidden min-w-0">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4 min-w-0">
             <button onClick={() => setView("home")} className="text-left group transition-opacity hover:opacity-80">
               <h1 className="text-xl md:text-2xl font-light tracking-tight text-foreground flex items-center gap-2 md:gap-3">
@@ -93,7 +93,7 @@ const Index = () => {
               </div>
             )}
 
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[340px] z-[100] sm:relative sm:translate-x-0 sm:w-auto sm:max-w-none sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto flex bg-carbon/95 sm:bg-carbon backdrop-blur-xl sm:backdrop-blur-none border border-border sm:border shadow-2xl sm:shadow-none rounded-[24px] sm:rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[380px] z-[100] sm:relative sm:translate-x-0 sm:w-auto sm:max-w-none sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto flex bg-carbon/95 sm:bg-carbon backdrop-blur-xl sm:backdrop-blur-none border border-border sm:border shadow-2xl sm:shadow-none rounded-[24px] sm:rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
               {[
                 { id: "home", icon: LayoutGrid, label: "Dash", full: "Dashboard" },
                 { id: "capture", icon: ClipboardList, label: "Log", full: "Capture Log" },
@@ -294,19 +294,21 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Always show summary on mobile at bottom of view unless rates is open */}
-                <div className="space-y-4 pb-12 print:hidden">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
-                      {showRates ? "Project Settings" : "Performance Summary"}
-                    </h3>
+                {/* Show summary on mobile at bottom of view for dashboard or invoice, or when rates are open */}
+                {(view === "home" || view === "invoice" || showRates) && (
+                  <div className="space-y-4 pb-12 print:hidden">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
+                        {showRates ? "Project Settings" : "Performance Summary"}
+                      </h3>
+                    </div>
+                    {showRates ? (
+                      <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
+                    ) : (
+                      <Summary entries={entries} rates={rates} project={project} />
+                    )}
                   </div>
-                  {showRates ? (
-                    <RatesPanel rates={rates} onChange={setRates} project={project} onProject={setProject} role={crewRole} onRole={setRole} />
-                  ) : (
-                    <Summary entries={entries} rates={rates} project={project} />
-                  )}
-                </div>
+                )}
               </div>
             </>
           )}

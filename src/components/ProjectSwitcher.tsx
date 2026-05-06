@@ -54,14 +54,14 @@ export const ProjectSwitcher = ({ projects, activeId, onSelect, onCreate, onRena
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outlineGlass" size="default" className="min-w-[14rem] justify-between">
+        <Button variant="outlineGlass" size="lg" className="min-w-[14rem] h-14 justify-between border-primary/20 bg-primary/5 hover:bg-primary/10 w-full sm:w-auto">
           <span className="truncate text-left">
-            <span className="block text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
+            <span className="block text-[10px] font-mono uppercase tracking-widest text-primary/70 mb-0.5">
               {active?.crewRole || "Project"}
             </span>
-            <span className="block text-foreground font-medium tracking-tight uppercase truncate">{active?.name}</span>
+            <span className="block text-primary font-bold tracking-tight uppercase truncate text-base md:text-lg">{active?.name}</span>
           </span>
-          <ChevronsUpDown className="size-4 text-muted-foreground shrink-0 ml-2" />
+          <ChevronsUpDown className="size-5 text-primary shrink-0 ml-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 bg-carbon border-border overflow-y-auto max-h-[85vh]">
