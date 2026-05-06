@@ -227,7 +227,7 @@ export const ProjectSetup = ({ onCancel, onSave }: Props) => {
         </section>
 
         <section className="bg-carbon/40 rounded-3xl border border-border p-8 space-y-6">
-          <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground font-bold px-1">Additional Rates & Allowances</label>
+          <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground font-bold px-1">Overtime, Fees & Allowances</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">

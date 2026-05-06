@@ -52,7 +52,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background text-foreground antialiased flex flex-col p-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen min-h-[100dvh] bg-background text-foreground antialiased flex flex-col p-4 pb-28 pt-[calc(env(safe-area-inset-top,0px)+1rem)] sm:pb-4 md:p-6 lg:p-10 lg:pb-0 lg:pt-12 transition-colors duration-300 overflow-x-hidden w-full max-w-full">
       <div className="max-w-screen-2xl mx-auto w-full flex-1 flex flex-col space-y-8 md:space-y-12 min-w-0">
         <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 lg:gap-8 border-b border-border/60 pb-8 md:pb-12 shrink-0 print:hidden min-w-0">
           <div className="flex flex-wrap justify-between items-center w-full lg:w-auto gap-4 min-w-0">
@@ -72,7 +72,7 @@ const Index = () => {
               )}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full lg:w-auto max-w-full overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full lg:w-auto max-w-full pb-1 sm:pb-0">
             <div className="hidden lg:flex items-center gap-2">
               <UserMenu />
               <ThemeToggle />
@@ -93,7 +93,7 @@ const Index = () => {
               </div>
             )}
 
-            <div className="flex bg-carbon border border-border rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
+            <div className="fixed bottom-2 left-2 right-2 z-[100] sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto flex bg-carbon/95 sm:bg-carbon backdrop-blur-xl sm:backdrop-blur-none border border-border sm:border shadow-2xl sm:shadow-none rounded-2xl sm:rounded-lg p-1 gap-1 overflow-x-auto no-scrollbar">
               {[
                 { id: "home", icon: LayoutGrid, label: "Dash", full: "Dashboard" },
                 { id: "capture", icon: ClipboardList, label: "Log", full: "Capture Log" },
@@ -105,11 +105,12 @@ const Index = () => {
                   type="button"
                   onClick={() => setView(item.id as View)}
                   aria-pressed={view === item.id}
-                  className={`flex items-center justify-center gap-1.5 px-3 md:px-4 py-2 rounded-md text-[10px] md:text-xs font-semibold uppercase tracking-widest transition-all flex-1 min-w-[70px] md:min-w-[100px] ${
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-2 sm:px-3 md:px-4 py-2 sm:py-2 rounded-[10px] sm:rounded-md text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-widest transition-all flex-1 min-w-[60px] sm:min-w-[70px] md:min-w-[100px] ${
                     view === item.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-carbon-light/50"
                   }`}>
-                  <item.icon className="size-3.5 md:size-4 shrink-0" />
-                  <span className="whitespace-nowrap md:hidden">{item.label}</span>
+                  <item.icon className="size-[18px] sm:size-3.5 md:size-4 shrink-0" />
+                  <span className="whitespace-nowrap sm:hidden">{item.label}</span>
+                  <span className="whitespace-nowrap hidden sm:inline md:hidden">{item.label}</span>
                   <span className="whitespace-nowrap hidden md:inline">{item.full}</span>
                 </button>
               ))}
