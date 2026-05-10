@@ -229,7 +229,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 
       <Field label="Date of Session">
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full bg-obsidian border border-border rounded-lg px-3 py-3 text-center sm:text-left text-foreground focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
+          className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-3 py-3 text-center sm:text-left text-foreground focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark]" />
       </Field>
       <Field label="Unit Location">
         <div className="space-y-1 relative">
@@ -245,7 +245,7 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
                     setLocation(e.target.value);
                   }
                 }}
-                className="w-full bg-obsidian border rounded-lg border-border px-4 py-3 text-foreground appearance-none focus:outline-none focus:border-primary/60 transition-colors cursor-pointer"
+                className="w-full min-w-0 bg-obsidian border rounded-lg border-border px-4 py-3 text-foreground appearance-none focus:outline-none focus:border-primary/60 transition-colors cursor-pointer"
               >
                 <option value="" disabled>Select a location...</option>
                 {recentLocations.map(loc => (
@@ -296,32 +296,32 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
         <>
           <Field label="Call Time">
             <input type="time" value={call} onChange={(e) => handleCallChange(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 transition-colors [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-accent/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">From call sheet</p>
           </Field>
           <Field label="Actual Start">
             <input 
               type={actualStart ? "time" : "text"} 
               placeholder="--:--"
-              onFocus={(e) => { e.target.type = "time"; try { e.target.showPicker?.() } catch(err){} }}
+              onFocus={(e) => { e.target.type = "time"; try { e.target.showPicker?.() } catch(err){ /* ignore */ } }}
               onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
               value={actualStart} onChange={(e) => setActualStart(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark] placeholder:text-muted-foreground/50" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors [color-scheme:dark] placeholder:text-muted-foreground/50" />
             <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If pre-call</p>
           </Field>
           <Field label="Wrap Time">
             <input type="time" value={wrap} onChange={(e) => setWrap(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark]" />
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70 font-mono">Scheduled wrap</p>
           </Field>
           <Field label="Actual Wrap">
             <input 
               type={actualWrap ? "time" : "text"} 
               placeholder="--:--"
-              onFocus={(e) => { e.target.type = "time"; try { e.target.showPicker?.() } catch(err){} }}
+              onFocus={(e) => { e.target.type = "time"; try { e.target.showPicker?.() } catch(err){ /* ignore */ } }}
               onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
               value={actualWrap} onChange={(e) => setActualWrap(e.target.value)}
-              className="w-full bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark] placeholder:text-muted-foreground/50" />
+              className="w-full min-w-0 bg-obsidian border border-border rounded-lg px-2 sm:px-4 py-3 text-center text-foreground font-mono tabular-nums focus:outline-none focus:border-ruby/60 transition-colors [color-scheme:dark] placeholder:text-muted-foreground/50" />
             <p className="text-[9px] uppercase tracking-widest text-primary font-bold font-mono italic">If ran late</p>
           </Field>
 
@@ -487,9 +487,9 @@ export const EntryForm = ({ onSubmit, existingEntries = [], recentLocations = []
 };
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
-  <div className={`space-y-2.5 min-w-0 flex flex-col w-full max-w-full ${className}`}>
+  <div className={`space-y-2.5 min-w-0 flex flex-col w-full max-w-full overflow-hidden ${className}`}>
     <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">{label}</label>
-    <div className="w-full min-w-0 flex flex-col relative">
+    <div className="w-full min-w-0 flex flex-col relative max-w-full">
       {children}
     </div>
   </div>

@@ -115,18 +115,33 @@ const toMinutes = (hhmm: string) => {
 
 export function workedHours(entry: DayEntry, rates?: RateConfig): number {
   if (!entry.call || !entry.wrap) return 0;
-  // Pre-call is handled entirely separately, so standard worked hours start at 'call'.
-  const startStr = entry.call;
-  const endStr = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? entry.actualWrap : entry.wrap;
-  const start = toMinutes(startStr);
-  let end = toMinutes(endStr);
-  if (end <= start) end += 24 * 60; // crossed midnight
+  
+  const call = toMinutes(entry.call);
+  let wrap = toMinutes(entry.wrap);
+  if (wrap <= call) wrap += 24 * 60;
+  
+  let actualStart = entry.actualStart && /^\d{2}:\d{2}$/.test(entry.actualStart) ? toMinutes(entry.actualStart) : call;
+  if (actualStart > call && actualStart > 12 * 60 && call < 12 * 60) {
+    actualStart -= 24 * 60; // actualStart was yesterday (e.g. 23:00 for a 01:00 call)
+  }
+  
+  let actualWrap = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? toMinutes(entry.actualWrap) : wrap;
+  if (actualWrap < actualStart && actualWrap < 12 * 60 && actualStart >= 12 * 60) {
+    actualWrap += 24 * 60; // actualWrap is next day
+  } else if (actualWrap <= actualStart && actualStart - actualWrap < 12 * 60) {
+    // If it's just later but doesn't cross midnight threshold dramatically
+    actualWrap += 24 * 60; 
+  }
+  
+  // We credit the scheduled day at minimum, plus any pre-call or post-wrap
+  const effectiveStart = Math.min(actualStart, call);
+  const effectiveWrap = Math.max(actualWrap, wrap);
   
   // Meal deduction
-  const isRunningLunch = rates?.isRunningLunch ?? (rates?.basicHours === 10);
+  const isRunningLunch = rates?.isRunningLunch ?? false;
   const meal = isRunningLunch ? 0 : (entry.mealMinutes || 0);
   
-  const worked = end - start - meal;
+  const worked = effectiveWrap - effectiveStart - meal;
   return Math.max(0, worked / 60);
 }
 
@@ -134,8 +149,12 @@ export function workedHours(entry: DayEntry, rates?: RateConfig): number {
 export function preCallHours(entry: DayEntry): number {
   if (!entry.actualStart || !/^\d{2}:\d{2}$/.test(entry.actualStart)) return 0;
   const call = toMinutes(entry.call);
-  const actual = toMinutes(entry.actualStart);
-  // Only count if actual is earlier than call on the same day.
+  let actual = toMinutes(entry.actualStart);
+  
+  if (actual > call && actual > 12 * 60 && call < 12 * 60) {
+    actual -= 24 * 60; // previous day e.g. 23:00 for a 01:00 call
+  }
+  
   if (actual >= call) return 0;
   return (call - actual) / 60;
 }
@@ -177,51 +196,54 @@ export function getConsecutiveDay(date: string): number {
 }
 
 export function breakdown(entry: DayEntry, rates: RateConfig): DayBreakdown {
+  if (!entry.call || !entry.wrap) {
+    return {
+      worked: 0, basic: 0, ot15: 0, ot2: 0, preCall: 0, travelHours: 0,
+      basicPay: 0, ot15Pay: 0, ot2Pay: 0, preCallPay: 0, travelPay: 0,
+      nightPay: 0, perDiemPay: 0, kitRental: 0, expensesTotal: 0,
+      consecutiveMultiplier: 0, dayTypeMultiplier: 0, total: 0
+    };
+  }
+
   const workedTotal = workedHours(entry, rates);
   const preCall = preCallHours(entry);
   
-  // Pre-call fix: Worked hours from the function includes everything on set.
-  // We want to calculate basic/OT from the "post-call" portion, and handle pre-call separately.
-  // Actually, usually pre-call adds to the total day. 
-  // But the user says "Pre-call is added twice".
-  // If we count total hours (including pre-call) for OT, we shouldn't add full pre-call rate on top.
-  // We'll calculate the total worked, find OT, then add ONLY the premium (preCallRate - 1) for pre-call hours.
-  
-  // Minimum paid hours (per user request: "Even if worked less then 10 hours still count a minimum of 10 paid").
-  // We use max(rates.basicHours, workedTotal) to ensure they get at least their full basic day if they work less.
+  // Minimum paid hours
   const worked = Math.max(rates.basicHours || 10, workedTotal);
   
   const basic = Math.min(worked, rates.basicHours);
   const overtime = Math.max(0, worked - rates.basicHours);
+  
   // Shooting OT only applies when the entry opts in. Otherwise all OT is 1.5×.
-  // Per-entry minutes override the project-default minutes when provided.
   const sotMinutes = entry.shootingOT
     ? Math.max(0, entry.shootingOTMinutes ?? rates.shootingOTMinutes ?? 0)
     : 0;
   const shootingOTHours = sotMinutes / 60;
+  
+  // Actually, OT2 is usually up to shootingOTHours, and remainder is OT15.
   const ot2 = Math.min(overtime, shootingOTHours);
   const ot15 = Math.max(0, overtime - shootingOTHours);
+  
   const travelHours = (entry.travelMinutes || 0) / 60;
 
   const dayTypeMultiplier = rates.dayTypeRates?.[entry.dayType] ?? 1;
 
-  // Consecutive-day premium (BECTU 6th/7th day rules).
+  // Consecutive-day premium
   let consecutiveMultiplier = 1;
-  const dayIndex = entry.consecutiveDay ?? 1; // Default to 1, requires explicit 6 or 7
+  const dayIndex = entry.consecutiveDay ?? 1;
   
   if (dayIndex === 6) consecutiveMultiplier = rates.sixthDayMultiplier;
   else if (dayIndex >= 7) consecutiveMultiplier = rates.seventhDayMultiplier;
 
   const stackedMultiplier = dayTypeMultiplier * consecutiveMultiplier;
 
-  // Day rate (if set) replaces hourly basic pay; pro-rated when worked < basic.
   const rawBasicPay = rates.dayRate > 0
     ? rates.dayRate * (rates.basicHours > 0 ? basic / rates.basicHours : 1)
     : basic * rates.hourlyRate;
 
-  // Pre-call:
-  // Paid completely separately from the basic day and standard OT.
-  const preCallPay = preCall * rates.hourlyRate * rates.preCallRate * stackedMultiplier;
+  // PreCall is now just included in regular worked hours and therefore becomes standard overtime.
+  // We keep `preCall` variable for timeline visualization, but its pay is 0.
+  const preCallPay = 0;
 
   const basicPay = rawBasicPay * stackedMultiplier;
 

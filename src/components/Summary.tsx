@@ -8,7 +8,6 @@ type Props = { entries: DayEntry[]; rates: RateConfig; project: string };
 
 const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: string) => {
   const t = totals(entries, rates);
-  const combinedOTHours = t.ot15Hours + t.preCallHours;
 
   const rows = [
     ["TimeTrack Invoice", project],
@@ -21,7 +20,7 @@ const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: strin
     }),
     [],
     ["Basic hrs", t.basicHours.toFixed(2)],
-    ["Overtime (OT) hrs", combinedOTHours.toFixed(2)],
+    ["Overtime (OT) hrs", t.ot15Hours.toFixed(2)],
     ["OT 2x hrs", t.ot2Hours.toFixed(2)],
     ["Travel hrs", t.travelHours.toFixed(2)],
     [`Per diems (${t.perDiems})`, t.perDiemTotal.toFixed(2)],
@@ -43,14 +42,13 @@ const exportInvoiceCSV = (entries: DayEntry[], rates: RateConfig, project: strin
 
 export const Summary = ({ entries, rates, project }: Props) => {
   const t = totals(entries, rates);
-  const combinedOTHours = t.ot15Hours + t.preCallHours;
 
   return (
     <div className="bg-slate-glass/40 p-1 rounded-2xl border border-border backdrop-blur-sm">
       <div className="bg-obsidian rounded-xl p-8 space-y-10">
         <div className={cn("grid grid-cols-2 gap-8", t.ot2Hours > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
           <Stat label="Standard Hours" value={fmtHours(t.basicHours)} />
-          <Stat label="Overtime (OT)" value={fmtHours(combinedOTHours)} tone="amber" />
+          <Stat label="Overtime (OT)" value={fmtHours(t.ot15Hours)} tone="amber" />
           {t.ot2Hours > 0 && <Stat label="Shooting OT @ 2x" value={fmtHours(t.ot2Hours)} tone="ruby" />}
           <Stat label="Travel Hours" value={fmtHours(t.travelHours)} />
         </div>

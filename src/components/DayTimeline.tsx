@@ -23,18 +23,32 @@ type Segment = {
  * Worked time is split into Basic → OT 1.5x → OT 2x in sequence.
  */
 function buildSegments(entry: DayEntry, rates: RateConfig): { segments: Segment[]; totalMin: number; startMin: number } {
+  if (!entry.call || !entry.wrap) return { segments: [], totalMin: 0, startMin: 0 };
+
   const callMin = toMinutes(entry.call);
-  const hasPreCall = !!entry.actualStart && /^\d{2}:\d{2}$/.test(entry.actualStart) && toMinutes(entry.actualStart) < callMin;
-  const startMin = hasPreCall ? toMinutes(entry.actualStart!) : callMin;
-  const endStr = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? entry.actualWrap : entry.wrap;
-  let end = toMinutes(endStr);
-  if (end <= startMin) end += 24 * 60;
-  const totalMin = Math.max(0, end - startMin);
+  let wrapMin = toMinutes(entry.wrap);
+  if (wrapMin <= callMin) wrapMin += 24 * 60;
 
-  const preCallMin = hasPreCall ? callMin - startMin : 0;
+  let actualStartMins = entry.actualStart && /^\d{2}:\d{2}$/.test(entry.actualStart) ? toMinutes(entry.actualStart) : callMin;
+  if (actualStartMins > callMin && actualStartMins > 12 * 60 && callMin < 12 * 60) {
+    actualStartMins -= 24 * 60;
+  }
+  
+  let actualWrapMins = entry.actualWrap && /^\d{2}:\d{2}$/.test(entry.actualWrap) ? toMinutes(entry.actualWrap) : wrapMin;
+  if (actualWrapMins < actualStartMins && actualWrapMins < 12 * 60 && actualStartMins >= 12 * 60) {
+    actualWrapMins += 24 * 60; 
+  } else if (actualWrapMins <= actualStartMins && actualStartMins - actualWrapMins < 12 * 60) {
+    actualWrapMins += 24 * 60; 
+  }
 
-  // Place a single meal block roughly in the middle of the post-call window.
-  const meal = Math.min(entry.mealMinutes || 0, totalMin - preCallMin);
+  const startMin = Math.min(actualStartMins, callMin);
+  const endMin = Math.max(actualWrapMins, wrapMin);
+  const totalMin = Math.max(0, endMin - startMin);
+
+  const preCallMin = Math.max(0, callMin - actualStartMins);
+  
+  const isRunningLunch = rates?.isRunningLunch ?? false;
+  const meal = isRunningLunch ? 0 : Math.min(entry.mealMinutes || 0, totalMin - preCallMin);
   const postCallTotal = totalMin - preCallMin;
   const workedTotal = Math.max(0, postCallTotal - meal);
   const mealStart = preCallMin + Math.max(0, Math.round((postCallTotal - meal) / 2));
@@ -126,10 +140,14 @@ export const DayTimeline = ({ entry, rates }: Props) => {
     return <p className="text-xs text-muted-foreground font-mono">Set call and wrap times to see the timeline.</p>;
   }
 
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((p) => ({
-    pct: p * 100,
-    label: fmtClock(startMin, Math.round(totalMin * p)),
-  }));
+  const mealSeg = segments.find(s => s.label === "Meal");
+  const tickList: {pct: number, label: string, isEdge?: boolean}[] = [];
+  tickList.push({ pct: 0, label: fmtClock(startMin, 0), isEdge: true });
+  if (mealSeg && mealSeg.startMin > 0 && mealSeg.endMin < totalMin) {
+    tickList.push({ pct: (mealSeg.startMin / totalMin) * 100, label: fmtClock(startMin, mealSeg.startMin) });
+    tickList.push({ pct: (mealSeg.endMin / totalMin) * 100, label: fmtClock(startMin, mealSeg.endMin) });
+  }
+  tickList.push({ pct: 100, label: fmtClock(startMin, totalMin), isEdge: true });
 
   const startLabel = entry.actualStart && entry.actualStart !== entry.call
     ? `${entry.actualStart} start (call ${entry.call})`
@@ -169,23 +187,26 @@ export const DayTimeline = ({ entry, rates }: Props) => {
       </div>
 
       <div className="relative h-3">
-        {ticks.map((t) => (
-          <div key={t.pct} className="absolute -translate-x-1/2 text-[9px] font-mono text-muted-foreground" style={{ left: `${t.pct}%` }}>
-            {t.label}
-          </div>
-        ))}
+        {tickList.map((t, idx) => {
+          const alignClass = t.pct === 0 ? "translate-x-0" : t.pct === 100 ? "-translate-x-full" : "-translate-x-1/2";
+          return (
+            <div key={`${t.pct}-${idx}`} className={`absolute text-[9px] font-mono text-muted-foreground ${alignClass} ${t.isEdge ? '' : 'hidden md:block'}`} style={{ left: `${t.pct}%` }}>
+              {t.label}
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono pt-2">
         <Legend swatch="bg-primary" label={`Basic ${fmtHours(b.basic)}h`} />
-        {(b.preCall > 0 || b.ot15 > 0) && (
-          <div className="flex items-center gap-1.5">
-            <div className="flex -space-x-1">
-              {b.preCall > 0 && <div className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-obsidian" />}
-              {b.ot15 > 0 && <div className="w-2.5 h-2.5 rounded-full bg-amber border border-obsidian" />}
-            </div>
-            <span>Overtime {fmtHours(b.preCall + b.ot15)}h</span>
-          </div>
+        {b.ot15 > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="flex -space-x-1">
+              {b.preCall > 0 && <span className="size-2.5 rounded-sm bg-orange-500 border border-obsidian" aria-hidden />}
+              {(b.ot15 - b.preCall) > 0 && <span className="size-2.5 rounded-sm bg-amber border border-obsidian" aria-hidden />}
+            </span>
+            Overtime {fmtHours(b.ot15)}h
+          </span>
         )}
         {b.ot2 > 0 && <Legend swatch="bg-ruby" label={`OT 2× ${fmtHours(b.ot2)}h`} />}
         {entry.mealMinutes > 0 && <Legend swatch="bg-muted" label={`Meal ${entry.mealMinutes}m`} />}

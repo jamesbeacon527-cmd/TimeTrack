@@ -81,7 +81,7 @@ export const RecentLog = ({ entries, rates, onRemove, onUpdate, recentLocations 
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono uppercase tracking-widest">
                   <Stat label={`Basic (${fmtHours(b.basic)}h)`} value={fmtGBP(b.basicPay)} tone="primary" />
-                  {(b.ot15Pay + b.preCallPay > 0) && <Stat label={`Overtime (${fmtHours(b.preCall + b.ot15)}h)`} value={fmtGBP(b.ot15Pay + b.preCallPay)} tone="amber" />}
+                  {(b.ot15Pay > 0) && <Stat label={`Overtime (${fmtHours(b.ot15)}h)`} value={fmtGBP(b.ot15Pay)} tone="amber" />}
                   {b.ot2Pay > 0 && <Stat label={`OT 2× (${fmtHours(b.ot2)}h)`} value={fmtGBP(b.ot2Pay)} tone="ruby" />}
                   {b.travelPay > 0 && <Stat label={`Travel (${fmtHours(b.travelHours)}h)`} value={fmtGBP(b.travelPay)} />}
                   {b.nightPay > 0 && <Stat label="Night" value={fmtGBP(b.nightPay)} tone="accent" />}

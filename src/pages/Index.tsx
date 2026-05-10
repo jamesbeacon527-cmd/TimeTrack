@@ -155,7 +155,7 @@ const Index = () => {
                 <PanelGroup direction="horizontal" className="h-full" key={view}>
                   {view === "capture" ? (
                     <>
-                      <Panel id="log-pane" order={1} defaultSize={30} minSize={20}>
+                      <Panel id="log-pane" order={1} defaultSize={40} minSize={20}>
                         <div className="h-full pr-10 overflow-y-auto space-y-6 custom-scrollbar">
                           <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
                             <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Recent Captured Time</h3>
@@ -171,7 +171,7 @@ const Index = () => {
                         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
                       </PanelResizeHandle>
                       
-                      <Panel id="capture-pane" order={2} defaultSize={40} minSize={30}>
+                      <Panel id="capture-pane" order={2} defaultSize={60} minSize={30}>
                         <div className="h-full px-10 overflow-y-auto space-y-8 custom-scrollbar">
                           <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
                             <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">Session Capture</h3>
@@ -220,20 +220,24 @@ const Index = () => {
                     </Panel>
                   )}
 
-                  <PanelResizeHandle className="w-2 group relative transition-all active:w-3 print:hidden">
-                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
-                  </PanelResizeHandle>
+                  {view !== "capture" && (
+                    <>
+                      <PanelResizeHandle className="w-2 group relative transition-all active:w-3 print:hidden">
+                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/40 group-active:bg-primary rounded-full h-full" />
+                      </PanelResizeHandle>
 
-                  <Panel id="side-pane" order={3} defaultSize={30} minSize={25} className="print:hidden">
-                    <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar print:hidden">
-                      <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
-                        <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
-                          Production Summary
-                        </h3>
-                      </div>
-                      <Summary entries={entries} rates={rates} project={project} />
-                    </div>
-                  </Panel>
+                      <Panel id="side-pane" order={3} defaultSize={30} minSize={25} className="print:hidden">
+                        <div className="h-full pl-6 overflow-y-auto space-y-6 custom-scrollbar print:hidden">
+                          <div className="flex items-center justify-between sticky top-0 bg-background py-3 z-10">
+                            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground font-bold italic underline underline-offset-4 decoration-primary/40">
+                              Production Summary
+                            </h3>
+                          </div>
+                          <Summary entries={entries} rates={rates} project={project} />
+                        </div>
+                      </Panel>
+                    </>
+                  )}
                 </PanelGroup>
               </div>
 

@@ -188,11 +188,27 @@ const TabButton = ({ active, onClick, children }: { active: boolean; onClick: ()
   </button>
 );
 
-const NumField = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (v: number) => void; step?: number }) => (
-  <div className="space-y-2">
-    <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">{label}</label>
-    <input type="number" min={0} step={step} value={value}
-      onChange={(e) => onChange(Number(e.target.value) || 0)}
-      className="w-full bg-obsidian border border-border rounded-lg px-4 py-2.5 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors" />
-  </div>
-);
+const NumField = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (v: number) => void; step?: number }) => {
+  const [str, setStr] = React.useState(value.toString());
+
+  React.useEffect(() => {
+    if (Number(str) !== value && !(str === "" && value === 0)) {
+      setStr(value.toString());
+    }
+  }, [value, str]);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold px-1">{label}</label>
+      <input type="number" min={0} step={step} value={str}
+        onChange={(e) => {
+          setStr(e.target.value);
+          onChange(e.target.value === "" ? 0 : Number(e.target.value));
+        }}
+        onBlur={() => {
+          setStr(value.toString());
+        }}
+        className="w-full bg-obsidian border border-border rounded-lg px-4 py-2.5 text-foreground font-mono tabular-nums focus:outline-none focus:border-primary/60 transition-colors" />
+    </div>
+  );
+};
