@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { RateConfig, DayType } from "@/lib/calc";
 import { DAY_TYPES, DAY_TYPE_LABELS } from "@/lib/calc";
 
@@ -189,9 +189,9 @@ const TabButton = ({ active, onClick, children }: { active: boolean; onClick: ()
 );
 
 const NumField = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (v: number) => void; step?: number }) => {
-  const [str, setStr] = React.useState(value.toString());
+  const [str, setStr] = useState(value.toString());
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (Number(str) !== value && !(str === "" && value === 0)) {
       setStr(value.toString());
     }

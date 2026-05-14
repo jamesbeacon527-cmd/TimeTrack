@@ -141,12 +141,26 @@ export const Invoice = ({ entries, rates, projectName }: Props) => {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between border-b border-border/40 pb-1">
               <span className="text-muted-foreground">Basic Hours ({summary.basicHours.toFixed(1)}h)</span>
-              <span className="text-foreground font-mono">{fmtGBP(summary.basicHours * rates.hourlyRate)}</span>
+              <span className="text-foreground font-mono">{fmtGBP(summary.basicPay)}</span>
             </div>
-            <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
-              <span className="text-muted-foreground uppercase text-[10px]">Overtime</span>
-              <span className="text-foreground">{fmtGBP(summary.subtotal - (summary.basicHours * rates.hourlyRate + summary.perDiemTotal))}</span>
-            </div>
+            {summary.overtimePay > 0 && (
+              <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
+                <span className="text-muted-foreground uppercase text-[10px]">Overtime</span>
+                <span className="text-foreground">{fmtGBP(summary.overtimePay)}</span>
+              </div>
+            )}
+            {summary.nightPay > 0 && (
+              <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
+                <span className="text-muted-foreground uppercase text-[10px]">Night Premium</span>
+                <span className="text-foreground">{fmtGBP(summary.nightPay)}</span>
+              </div>
+            )}
+            {summary.travelPay > 0 && (
+              <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
+                <span className="text-muted-foreground uppercase text-[10px]">Travel Time</span>
+                <span className="text-foreground">{fmtGBP(summary.travelPay)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-b border-border/40 pb-1 font-mono">
               <span className="text-muted-foreground uppercase text-[10px]">Per Diems ({summary.perDiems})</span>
               <span className="text-foreground">{fmtGBP(summary.perDiemTotal)}</span>

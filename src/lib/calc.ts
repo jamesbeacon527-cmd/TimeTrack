@@ -270,6 +270,10 @@ export type Totals = {
   ot15Hours: number;
   ot2Hours: number;
   travelHours: number;
+  basicPay: number;
+  overtimePay: number;
+  nightPay: number;
+  travelPay: number;
   perDiems: number;
   perDiemTotal: number;
   expensesTotal: number;
@@ -283,6 +287,7 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
   const acc: Totals = {
     days: entries.length,
     basicHours: 0, preCallHours: 0, ot15Hours: 0, ot2Hours: 0, travelHours: 0,
+    basicPay: 0, overtimePay: 0, nightPay: 0, travelPay: 0,
     perDiems: 0, perDiemTotal: 0, expensesTotal: 0, kitRental: 0,
     subtotal: 0, vat: 0, grand: 0,
   };
@@ -293,6 +298,10 @@ export function totals(entries: DayEntry[], rates: RateConfig): Totals {
     acc.ot15Hours += b.ot15;
     acc.ot2Hours += b.ot2;
     acc.travelHours += b.travelHours;
+    acc.basicPay += b.basicPay;
+    acc.overtimePay += (b.ot15Pay + b.ot2Pay + b.preCallPay);
+    acc.nightPay += b.nightPay;
+    acc.travelPay += b.travelPay;
     acc.expensesTotal += b.expensesTotal;
     acc.kitRental += b.kitRental;
     acc.subtotal += b.total;
